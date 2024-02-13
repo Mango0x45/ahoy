@@ -4,4 +4,4 @@ The original CHIP-8 implementation shifted Vy by 1 and stored the result
 in Vx.  Some GitHub projects shift the value in Vx by the value in Vy.
 Ahoy takes the approach of SCHIP where Vx is shifted by 1 and Vy is
 ignored.  The Ahoy assembler does not recognize a second Vy argument to
-either instruction.
+either instruction and the Y section of the instruction is always set to 0.
