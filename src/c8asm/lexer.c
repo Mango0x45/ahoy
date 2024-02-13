@@ -90,8 +90,7 @@ lexline(struct tokens *toks, struct u8view *sv)
 			if (ch == '0') {
 				w = u8next(&ch, &sv->p, &sv->len);
 				if (!w || rprop_is_pat_ws(ch)) {
-					sv->p -= w;
-					sv->len += w;
+					U8MOV(sv, -w);
 					goto out;
 				}
 				tok.sv.len++;
