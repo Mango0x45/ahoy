@@ -50,8 +50,10 @@ getaddr(struct raw_addr a)
 	struct label *lbl;
 	if (!a.label)
 		return a.val;
+	/* The first 0x200 is reserved for the interpreter, so we need to offset
+	   labels that aren’t integer-literals by that. */
 	if (lbl = getlabel(a.sv))
-		return lbl->addr;
+		return lbl->addr + 0x200;
 	die_with_off(filename, a.sv.p - baseptr, E_LNEXISTS, U8_PRI_ARGS(a.sv));
 }
 
