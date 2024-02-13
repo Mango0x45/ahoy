@@ -1,0 +1,46 @@
+program = {line};
+line = {label}, [operation], EOL;
+label = IDENT, ':';
+
+operation = add  | and  | bcd | call
+          | cls  | drw  | hex | jp
+          | ld   | or   | ret | rnd
+          | rstr | se   | shl | shr
+          | sknp | skp  | sne | stor
+          | sub  | subn | sys | xor
+		  | db;
+
+add  = "add", ((vreg, vreg) | (vreg, BYTE) | ("i", vreg));
+and  = "and", vreg, vreg;
+bcd  = "bcd", vreg;
+call = "call", addr;
+cls  = "cls";
+drw  = "drw", vreg, vreg, NIBBL;
+hex  = "hex", vreg;
+jp   = "jp", ["v0"], addr;
+ld   = "ld", ((vreg, (vreg | BYTE | "dt" | "k"))
+            | ("i", addr)
+			| ("dt", vreg)
+			| ("st", vreg));
+or   = "or", vreg, vreg;
+ret  = "ret";
+rnd  = "rnd", vreg, BYTE;
+rstr = "rstr", vreg;
+se   = "se", vreg, (vreg | BYTE);
+shl  = "shl", vreg;
+shr  = "shr", vreg;
+sknp = "sknp", vreg;
+skp  = "skp", vreg;
+sne  = "sne", vreg, (vreg | BYTE);
+stor = "stor", vreg;
+sub  = "sub", vreg, vreg;
+subn = "subn", vreg, vreg;
+sys  = "sys", addr;
+xor  = "xor", vreg, vreg;
+db   = "db", {(BYTE | STRING)};
+
+addr = ADDR | IDENT;
+vreg = "v0" | "v1" | "v2" | "v3"
+     | "v4" | "v5" | "v6" | "v7"
+     | "v8" | "v9" | "va" | "vb"
+     | "vc" | "vd" | "ve" | "vf";

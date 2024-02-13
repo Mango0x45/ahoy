@@ -1,0 +1,7 @@
+The shl and shr instructions are often documented to take both a Vx and a
+Vy argument.  It’s a bit unclear what the behaviour here is meant to be.
+The original CHIP-8 implementation shifted Vy by 1 and stored the result
+in Vx.  Some GitHub projects shift the value in Vx by the value in Vy.
+Ahoy takes the approach of SCHIP where Vx is shifted by 1 and Vy is
+ignored.  The Ahoy assembler does not recognize a second Vy argument to
+either instruction.

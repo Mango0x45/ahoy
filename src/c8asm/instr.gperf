@@ -1,0 +1,33 @@
+%compare-lengths
+%define initializer-suffix ,nullptr
+%define lookup-function-name oplookup
+%includes
+%readonly-tables
+%struct-type
+struct opf_pair { char *name; void (*pfn)(void); };
+%%
+add,  parseop_add
+and,  parseop_and
+bcd,  parseop_bcd
+call, parseop_call
+cls,  parseop_cls
+db,   parseop_db
+drw,  parseop_drw
+hex,  parseop_hex
+jp,   parseop_jp
+ld,   parseop_ld
+or,   parseop_or
+ret,  parseop_ret
+rnd,  parseop_rnd
+rstr, parseop_rstr
+se,   parseop_se
+shl,  parseop_shl
+shr,  parseop_shr
+sknp, parseop_sknp
+skp,  parseop_skp
+sne,  parseop_sne
+stor, parseop_stor
+sub,  parseop_sub
+subn, parseop_subn
+sys,  parseop_sys
+xor,  parseop_xor
