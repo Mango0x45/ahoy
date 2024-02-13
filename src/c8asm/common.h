@@ -1,7 +1,7 @@
 #ifndef AHOY_C8ASM_COMMON_H
 #define AHOY_C8ASM_COMMON_H
 
-#include <mbstring.h>
+#include <rune.h>
 
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
