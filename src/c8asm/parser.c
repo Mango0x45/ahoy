@@ -8,12 +8,8 @@
 #include "cerr.h"
 #include "common.h"
 #include "lexer.h"
+#include "macros.h"
 #include "parser.h"
-
-/* TODO: Remove */
-#ifndef unreachable
-#	define unreachable() __builtin_unreachable()
-#endif
 
 #define E_BADLABEL  "identifier ‘%.*s’ cannot be used as a label"
 #define E_EARLY     "expected %s but input ended prematurely"

@@ -5,6 +5,7 @@
 #include "cerr.h"
 #include "common.h"
 #include "lexer.h"
+#include "macros.h"
 
 #define ISDIGIT(n)   ((n) >= '0' && (n) <= '9')
 #define U8MOV(sv, n) ((sv)->p += (n), (sv)->len -= (n))

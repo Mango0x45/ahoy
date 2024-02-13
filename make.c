@@ -19,7 +19,7 @@
 
 #define CC         "cc"
 #define CFLAGS     WARN, "-std=c2x"
-#define CFLAGS_DBG CFLAGS, "-Og", "-ggdb3"
+#define CFLAGS_DBG CFLAGS, "-Og", "-ggdb3", "-DDEBUG=1"
 #ifdef __APPLE__
 #	define CFLAGS_RLS CFLAGS, "-O3"
 #else
@@ -209,7 +209,7 @@ build_c8asm(void)
 	cmdaddv(&c, sv.buf, sv.len);
 	if (FLAGSET('l'))
 		cmdadd(&c, "-flto");
-	cmdadd(&c, "-o", "c8asm");
+	cmdadd(&c, "-o", c.dst);
 	cmdaddv(&c, objs, g.gl_pathc);
 	cmdadd(&c, "src/common/cerr.o", "vendor/librune/librune.a");
 	CMDPRC2(c);

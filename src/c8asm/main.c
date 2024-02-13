@@ -13,6 +13,7 @@
 #include "cerr.h"
 #include "common.h"
 #include "lexer.h"
+#include "macros.h"
 #include "parser.h"
 
 static void asmfile(int, const char *);

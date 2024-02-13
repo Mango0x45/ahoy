@@ -10,12 +10,8 @@
 #include "assembler.h"
 #include "cerr.h"
 #include "common.h"
+#include "macros.h"
 #include "parser.h"
-
-/* TODO: Remove */
-#ifndef unreachable
-#	define unreachable() __builtin_unreachable()
-#endif
 
 #define E_LEXISTS  "label ‘%.*s’ has already been declared"
 #define E_LNEXISTS "label ‘%.*s’ hasn’t been declared"
