@@ -76,8 +76,10 @@ emulate(struct u8view prog)
 {
 	struct timespec tp;
 
-	if (prog.len > MEM_FREE)
-		diex("%s: binary of size %zu KiB too large to fit in RAM", "TODO", 0ul);
+	if (prog.len > MEM_FREE) {
+		diex("%s: binary of size %.1f KiB exceeds %d B maximum", "TODO",
+		     (double)prog.len / 1024, MEM_FREE);
+	}
 
 	PC = MEM_RESERVED;
 	memcpy(mem + PC, prog.p, prog.len);
