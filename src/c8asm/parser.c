@@ -23,7 +23,6 @@
 #define E_TOOLARGE  "expected %s but got out-of-range integer ‘%.*s’"
 
 #define die_with_off(P, ...) die_with_off(filename, (P)-baseptr, __VA_ARGS__)
-#define memeq(X, Y, N)       (!memcmp(X, Y, N))
 
 enum numsize {
 	NS_NIBBLE = 0xF,

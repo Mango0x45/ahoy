@@ -30,19 +30,12 @@ struct labels {
 	size_t len, cap;
 };
 
-static bool u8eq(struct u8view, struct u8view);
 static void pushlabel(struct labels *, struct label);
 static uint16_t getaddr(struct raw_addr);
 static struct label *getlabel(struct u8view);
 
 static size_t i;
 static struct labels locals, globals;
-
-bool
-u8eq(struct u8view x, struct u8view y)
-{
-	return x.len == y.len && memcmp(x.p, y.p, x.len) == 0;
-}
 
 struct label *
 getlabel(struct u8view sv)
