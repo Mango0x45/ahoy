@@ -32,6 +32,8 @@ size_t u8bspn(const char8_t *, size_t, const rune *, size_t);
 size_t u8cspn(const char8_t *, size_t, const rune *, size_t);
 size_t u8cbspn(const char8_t *, size_t, const rune *, size_t);
 
+int u8cmp(struct u8view, struct u8view);
+
 #if !_RUNE_NO_MACRO_WRAPPER
 #	define u8chk(s, n)      _RUNE_Q_PTR(u8chk, (s), (s), (n))
 #	define u8chr(s, ch, n)  _RUNE_Q_PTR(u8chr, (s), (s), (ch), (n))

@@ -31,7 +31,7 @@
 		cmdclr(&(C)); \
 	} while (0)
 #define CMDPRC(C)  _CMDPRC(C, cmdput)
-#define CMDPRC2(C) _CMDPRC(C, cmdput)
+#define CMDPRC2(C) _CMDPRC(C, cmdput2)
 
 #define streq(a, b) (!strcmp(a, b))
 
