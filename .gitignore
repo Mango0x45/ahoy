@@ -6,7 +6,7 @@ compile_commands.json
 .clangd
 
 # Test Files
-test.s
+*.s
 
 # Compilation Output
 ahoy
