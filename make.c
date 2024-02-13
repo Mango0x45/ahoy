@@ -9,6 +9,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if __has_include(<features.h>)
+#	include <features.h>
+#endif
+
 #include "cbs.h"
 
 #define WARN \
@@ -17,8 +21,12 @@
 		"-Wno-parentheses", /* if (x = foo()) */ \
 		"-Wno-pointer-sign" /* char ↔ char8_t */
 
-#define CC         "cc"
-#define CFLAGS     WARN, "-std=c2x"
+#define CC "cc"
+#ifdef __GNUC__
+#	define CFLAGS WARN, "-std=c2x", "-D_GNU_SOURCE"
+#else
+#	define CFLAGS WARN, "-std=c2x"
+#endif
 #define CFLAGS_DBG CFLAGS, "-Og", "-ggdb3", "-DDEBUG=1"
 #ifdef __APPLE__
 #	define CFLAGS_RLS CFLAGS, "-O3"
