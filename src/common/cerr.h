@@ -3,9 +3,7 @@
 
 #include <stddef.h>
 
-/* clang-format off */
-
-[[gnu::nonnull]] void cerrinit(const char *);
+void cerrinit(const char *);
 
 [[noreturn, gnu::nonnull, gnu::format(printf, 1, 2)]]
 void die(const char *, ...);
