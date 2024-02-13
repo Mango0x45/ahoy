@@ -81,7 +81,7 @@ pushlabel(struct labels *dst, struct label lbl)
 }
 
 void
-assemble([[maybe_unused]] FILE *stream, struct ast ast)
+assemble(FILE *stream, struct ast ast)
 {
 #define PUT(X) \
 	do { \
