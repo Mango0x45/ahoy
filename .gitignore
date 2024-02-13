@@ -9,6 +9,7 @@ compile_commands.json
 test.s
 
 # Compilation Output
+ahoy
 c8asm
 !src/*
 make
