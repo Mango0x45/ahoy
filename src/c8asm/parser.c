@@ -124,7 +124,7 @@ parseaddr(struct token tok)
 {
 	if (tok.kind == T_NUMBER)
 		return (struct raw_addr){.val = parsenum(tok, NS_ADDR)};
-	if (tok.kind == T_STRING) {
+	if (tok.kind == T_IDENT) {
 		if (regtype(tok.sv) != RT_NONE)
 			die_with_off(tok.sv.p, E_BADLABEL, U8_PRI_ARGS(tok.sv));
 		return (struct raw_addr){.label = true, .sv = tok.sv};
