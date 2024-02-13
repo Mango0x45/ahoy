@@ -77,6 +77,8 @@ assemble(FILE *stream, struct ast ast)
 		fwrite(&__x, 1, sizeof(__x), stream); \
 	} while (false)
 
+	bool pad = false;
+
 	da_foreach (&ast, node) {
 		if (node->kind == D_LABEL) {
 			struct label lbl = {
@@ -95,6 +97,11 @@ assemble(FILE *stream, struct ast ast)
 			continue;
 		if (node->kind != D_INSTR)
 			unreachable();
+
+		/* Instructions need to be 0-padded so they appear on an even byte
+		   boundary. */
+		if (node->instr.kind != I_DB && pad)
+			putchar(0);
 
 		switch (node->instr.kind) {
 		case I_ADD_I_VX:
@@ -124,6 +131,8 @@ assemble(FILE *stream, struct ast ast)
 		case I_DB:
 			da_foreach (&node->instr, byte)
 				fputc(*byte, stream);
+			if (node->instr.len & 1)
+				pad = !pad;
 			break;
 		case I_DRW:
 			PUT(0xD000 | (node->instr.args[0].val << 8)
