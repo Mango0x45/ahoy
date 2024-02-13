@@ -58,25 +58,22 @@ getlabel(struct u8view sv)
 uint16_t
 getaddr(struct raw_addr a)
 {
-	if (a.label) {
-		struct label *lbl = getlabel(a.sv);
-		if (lbl)
-			return lbl->addr;
-		die_with_off(filename, a.sv.p - baseptr, E_LNEXISTS, U8_PRI_ARGS(a.sv));
-	}
-	return a.val;
+	struct label *lbl;
+	if (!a.label)
+		return a.val;
+	if (lbl = getlabel(a.sv))
+		return lbl->addr;
+	die_with_off(filename, a.sv.p - baseptr, E_LNEXISTS, U8_PRI_ARGS(a.sv));
 }
 
 void
 pushlabel(struct labels *dst, struct label lbl)
 {
-	da_foreach (dst, stored) {
-		if (u8eq(stored->sv, lbl.sv)) {
-			die_with_off(filename, lbl.sv.p - baseptr, E_LEXISTS,
-			             U8_PRI_ARGS(lbl.sv));
-		}
+	struct label *found;
+	if (found = getlabel(lbl.sv)) {
+		die_with_off(filename, lbl.sv.p - baseptr, E_LEXISTS,
+		             U8_PRI_ARGS(lbl.sv));
 	}
-
 	dapush(dst, lbl);
 }
 
