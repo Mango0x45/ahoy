@@ -40,7 +40,7 @@
 		cmdclr(&c); \
 	} while (0)
 #define CMDPRC(c)  _CMDPRC(c, cmdput)
-#define CMDPRC2(c) _CMDPRC(c, cmdput)
+#define CMDPRC2(c) _CMDPRC(c, cmdput2)
 
 static void build_c8asm(void);
 static void build_common(void);
