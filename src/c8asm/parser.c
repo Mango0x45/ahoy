@@ -383,10 +383,10 @@ parseop_jp(void)
 	if (op.kind == T_IDENT)
 		rt = regtype(op.sv);
 	if (op.kind == T_NUMBER || (op.kind == T_IDENT && rt == RT_NONE)) {
-		ins.kind = I_JP_ADDR;
+		ins.kind = I_JP_A;
 		ins.args[ins.len++] = parseaddr(op);
 	} else if (op.kind == T_IDENT) {
-		ins.kind = I_JP_V0_ADDR;
+		ins.kind = I_JP_V0_A;
 		if (op.sv.len != 2 || !memeq(op.sv.p, "v0", 2)) {
 			die_with_off(op.sv.p, E_EXPECTED, "v0-register or address",
 			             tokrepr(op.kind), U8_PRI_ARGS(op.sv));
@@ -447,7 +447,7 @@ parseop_ld(void)
 
 			break;
 		case T_NUMBER:
-			ins.kind = I_LD_VX_BYTE;
+			ins.kind = I_LD_VX_B;
 			ins.args[ins.len++].val = parsenum(op, NS_BYTE);
 			break;
 		default:
