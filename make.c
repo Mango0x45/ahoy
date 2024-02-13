@@ -51,6 +51,7 @@ static void cmdput2(cmd_t);
 
 static uint64_t flags;
 static const char *argv0;
+static bool librune_built;
 
 static void
 usage(void)
@@ -156,6 +157,8 @@ build_ahoy(void)
 	cmd_t c = {0};
 	struct strv sv = {0};
 
+	build_librune();
+
 	if (glob("src/ahoy/*.c", 0, globerr, &g))
 		die("glob");
 
@@ -200,7 +203,7 @@ build_ahoy(void)
 		cmdadd(&c, "-flto");
 	cmdadd(&c, "-o", c.dst);
 	cmdaddv(&c, objs, g.gl_pathc);
-	cmdadd(&c, "src/common/cerr.o");
+	cmdadd(&c, "src/common/cerr.o", "vendor/librune/librune.a");
 	CMDPRC2(c);
 
 out:
@@ -290,6 +293,10 @@ build_librune(void)
 {
 	cmd_t c = {0};
 	struct strv sv = {0};
+
+	if (librune_built)
+		return;
+	librune_built = true;
 
 	env_or_default(&sv, "CC", CC);
 
