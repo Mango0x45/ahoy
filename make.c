@@ -22,8 +22,10 @@
 		"-Wno-pointer-sign" /* char ↔ char8_t */
 
 #define CC "cc"
-#ifdef __GNUC__
+#ifdef __GLIBC__
 #	define CFLAGS WARN, "-std=c2x", "-D_GNU_SOURCE"
+#elifdef __APPLE__ /* TODO: Improve this check */
+#	define CFLAGS WARN, "-std=c2x", "-DUINT64_WIDTH=64"
 #else
 #	define CFLAGS WARN, "-std=c2x"
 #endif

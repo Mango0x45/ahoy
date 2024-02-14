@@ -2,6 +2,7 @@
 %define initializer-suffix ,nullptr
 %define lookup-function-name oplookup
 %includes
+%language=ANSI-C
 %readonly-tables
 %struct-type
 struct opf_pair { char *name; void (*pfn)(void); };

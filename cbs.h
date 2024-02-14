@@ -717,6 +717,7 @@ _rebuild(char *src)
 {
 	char *bbn, *sbn, *argv0;
 	cmd_t cmd = {0};
+	struct strv sv = {0};
 
 	/* We assume that the compiled binary and the source file are in the same
 	   directory. */
@@ -732,7 +733,9 @@ _rebuild(char *src)
 	if (!foutdated(bbn, sbn))
 		return;
 
-	cmdadd(&cmd, "cc", "-std=c2x");
+	env_or_default(&sv, "CC", "cc");
+	cmdaddv(&cmd, sv.buf, sv.len);
+	cmdadd(&cmd, "-std=c2x");
 #ifdef CBS_PTHREAD
 	cmdadd(&cmd, "-lpthread");
 #endif
