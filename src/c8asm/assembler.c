@@ -60,8 +60,7 @@ getaddr(struct raw_addr a)
 void
 pushlabel(struct labels *dst, struct label lbl)
 {
-	struct label *found;
-	if (found = getlabel(lbl.sv)) {
+	if (getlabel(lbl.sv)) {
 		die_with_off(filename, lbl.sv.p - baseptr, E_LEXISTS,
 		             U8_PRI_ARGS(lbl.sv));
 	}
