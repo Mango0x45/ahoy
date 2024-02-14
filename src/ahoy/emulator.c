@@ -241,7 +241,7 @@ opexec(uint16_t op)
 			if (scr_row >= lengthof(screen))
 				break;
 
-			msk = ((uint64_t)spr_row << (64 - 8)) >> V[x];
+			msk = ((uint64_t)spr_row << (UINT64_WIDTH - 8)) >> V[x];
 			V[0xF] = screen[scr_row] & msk;
 			screen[scr_row] ^= msk;
 		}
