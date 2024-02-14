@@ -84,7 +84,8 @@ emulate(struct u8view prog)
 	PC = MEM_RESERVED;
 	memcpy(mem + PC, prog.p, prog.len);
 
-	clock_gettime(CLOCK_REALTIME, &tp);
+	if (clock_gettime(CLOCK_REALTIME, &tp) == -1)
+		die("clock_gettime");
 	srand(tp.tv_sec ^ tp.tv_nsec);
 
 	for (;; PC += 2) {
