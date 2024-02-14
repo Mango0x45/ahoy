@@ -100,8 +100,10 @@ assemble(FILE *stream, struct ast ast)
 
 		/* Instructions need to be 0-padded so they appear on an even byte
 		   boundary. */
-		if (node->instr.kind != I_DB && pad)
+		if (node->instr.kind != I_DB && pad) {
 			putchar(0);
+			pad = false;
+		}
 
 		switch (node->instr.kind) {
 		case I_ADD_I_VX:
