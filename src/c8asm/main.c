@@ -100,6 +100,11 @@ asmfile(int fd, const char *fn)
 	baseptr = u8strfit(&sb)->p;
 	assemble(stdout, ast = parsefile(toks = lexfile(u8strtou8(sb))));
 
+	da_foreach (&ast, node) {
+		if (node->kind == D_INSTR && node->instr.kind == I_DB)
+			free(node->instr.buf);
+	}
+
 	free(toks.buf);
 	free(ast.buf);
 	u8strfree(sb);
