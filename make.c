@@ -237,7 +237,7 @@ build_c8asm(void)
 	build_librune();
 
 	if (FLAGSET('f')
-	    || foutdated("src/c8asm/lookup.h", "src/c8asm/instr.gperf"))
+	    || foutdated("src/c8asm/autogen-lookup.h", "src/c8asm/instr.gperf"))
 	{
 		c.dst = "src/c8asm/autogen-lookup.h";
 		cmdadd(&c, "gperf", "src/c8asm/instr.gperf", "--output-file", c.dst);
