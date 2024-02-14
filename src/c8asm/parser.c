@@ -52,7 +52,7 @@ static void parseop_add(void), parseop_and(void), parseop_bcd(void),
 	parseop_shl(void), parseop_shr(void), parseop_sknp(void), parseop_skp(void),
 	parseop_sne(void), parseop_stor(void), parseop_sub(void),
 	parseop_subn(void), parseop_sys(void), parseop_xor(void);
-#include "lookup.h"
+#include "autogen-lookup.h"
 
 static size_t i;
 static struct ast ast;

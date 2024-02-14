@@ -104,8 +104,8 @@ main(int argc, char **argv)
 	} else if (streq(*argv, "clean")) {
 		cmd_t c = {0};
 		cmdadd(&c, "find", ".", "-type", "f", "(", "-name", "*.[ao]", "-or",
-		       "-name", "c8asm", "-or", "-path", "./src/c8asm/lookup.h", ")",
-		       "-delete");
+		       "-name", "c8asm", "-or", "-path", "./src/c8asm/autogen-lookup.h",
+		       ")", "-delete");
 		CMDPRC(c);
 	} else {
 		warnx("invalid subcommand -- '%s'", *argv);
@@ -239,7 +239,7 @@ build_c8asm(void)
 	if (FLAGSET('f')
 	    || foutdated("src/c8asm/lookup.h", "src/c8asm/instr.gperf"))
 	{
-		c.dst = "src/c8asm/lookup.h";
+		c.dst = "src/c8asm/autogen-lookup.h";
 		cmdadd(&c, "gperf", "src/c8asm/instr.gperf", "--output-file", c.dst);
 		CMDPRC2(c);
 	}
