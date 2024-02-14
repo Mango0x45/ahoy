@@ -11,6 +11,7 @@
 
 #include "cerr.h"
 #include "emulator.h"
+#include "gui.h"
 #include "macros.h"
 
 [[noreturn]] static void usage(void);
@@ -100,6 +101,8 @@ run(int fd, const char *fn)
 		die("read: %s", fn);
 
 	free(buf);
-	emulate(u8strtou8(sb));
+	wininit();
+	emuinit(u8strtou8(sb));
 	u8strfree(sb);
+	winfree();
 }

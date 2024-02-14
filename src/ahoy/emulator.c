@@ -72,7 +72,7 @@ scrdrw(void)
 }
 
 void
-emulate(struct u8view prog)
+emuinit(struct u8view prog)
 {
 	struct timespec tp;
 
@@ -87,12 +87,14 @@ emulate(struct u8view prog)
 	if (clock_gettime(CLOCK_REALTIME, &tp) == -1)
 		die("clock_gettime");
 	srand(tp.tv_sec ^ tp.tv_nsec);
+}
 
-	for (;; PC += 2) {
-		uint16_t op = (mem[PC] << 8) | mem[PC + 1];
-		opexec(op);
-		scrdrw();
-	}
+void
+emutick(void)
+{
+	opexec((mem[PC] << 8) | mem[PC + 1]);
+	scrdrw();
+	PC += 2;
 }
 
 void

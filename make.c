@@ -165,7 +165,7 @@ build_ahoy(void)
 	glob_t g;
 	char **objs;
 	cmd_t c = {0};
-	struct strv sv = {0};
+	struct strv sv = {0}, pc = {0};
 
 	build_librune();
 
@@ -187,6 +187,8 @@ build_ahoy(void)
 	else
 		env_or_default(&sv, "CFLAGS", CFLAGS_DBG);
 
+	(void)pcquery(&pc, "sdl2", PKGC_CFLAGS);
+
 	for (size_t i = 0; i < g.gl_pathc; i++) {
 		if (!FLAGSET('f') && !foutdated(objs[i], g.gl_pathv[i]))
 			continue;
@@ -196,6 +198,7 @@ build_ahoy(void)
 		if (FLAGSET('l'))
 			cmdadd(&c, "-flto");
 		cmdadd(&c, "-Isrc/common", "-Ivendor/da", "-Ivendor/librune/include");
+		cmdaddv(&c, pc.buf, pc.len);
 		cmdadd(&c, "-c", g.gl_pathv[i], "-o", objs[i]);
 		CMDPRC2(c);
 	}
@@ -204,6 +207,7 @@ build_ahoy(void)
 		goto out;
 
 	strvfree(&sv);
+	strvfree(&pc);
 	env_or_default(&sv, "CC", CC);
 	env_or_default(&sv, "LDFLAGS", nullptr);
 
@@ -211,6 +215,10 @@ build_ahoy(void)
 	cmdaddv(&c, sv.buf, sv.len);
 	if (FLAGSET('l'))
 		cmdadd(&c, "-flto");
+	if (pcquery(&pc, "sdl2", PKGC_LIBS))
+		cmdaddv(&c, pc.buf, pc.len);
+	else
+		cmdadd(&c, "-lSDL2");
 	cmdadd(&c, "-o", c.dst);
 	cmdaddv(&c, objs, g.gl_pathc);
 	cmdadd(&c, "src/common/cerr.o", "vendor/librune/librune.a");
@@ -219,6 +227,7 @@ build_ahoy(void)
 out:
 	globfree(&g);
 	strvfree(&sv);
+	strvfree(&pc);
 	for (size_t i = 0; i < g.gl_pathc; i++)
 		free(objs[i]);
 }

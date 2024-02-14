@@ -3,6 +3,7 @@
 
 #include <mbstring.h>
 
-void emulate(struct u8view);
+void emuinit(struct u8view);
+void emutick(void);
 
 #endif /* !AHOY_AHOY_EMULATOR_H */
