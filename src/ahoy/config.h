@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 struct config {
+	bool scanls;
 	bool seeded;
 	uint16_t seed;
 	unsigned cpu_hz;

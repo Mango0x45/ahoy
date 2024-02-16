@@ -81,7 +81,6 @@ opexec(uint16_t op)
 		switch (op) {
 		case 0x00E0:
 			memset(c8.screen, 0, sizeof(c8.screen));
-			c8.needs_redraw = true;
 			break;
 		case 0x00EE:
 			if (c8.SP == 0)
@@ -228,7 +227,6 @@ opexec(uint16_t op)
 			c8.screen[scr_row] ^= msk;
 		}
 
-		c8.needs_redraw = true;
 		break;
 	}
 

@@ -59,7 +59,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	        "Usage: %s [-c clock speed] [-s seed] [file]\n"
+	        "Usage: %s [-S] [-c clock speed] [-s seed] [file]\n"
 	        "       %s -h\n",
 	        argv0, argv0);
 	exit(EXIT_FAILURE);
@@ -89,13 +89,14 @@ main(int argc, char **argv)
 		{"clock-speed", required_argument, nullptr, 'c'},
 		{"help",        no_argument,       nullptr, 'h'},
 		{"seed",        required_argument, nullptr, 's'},
+		{"scanlines",   no_argument,       nullptr, 'S'},
 		{nullptr,       no_argument,       nullptr, 0  },
 	};
 
 	argv0 = argv[0];
 	cerrinit(*argv);
 
-	while ((opt = getopt_long(argc, argv, "c:hs:", longopts, nullptr)) != -1) {
+	while ((opt = getopt_long(argc, argv, "c:hs:S", longopts, nullptr)) != -1) {
 		switch (opt) {
 		case 'h':
 			execlp("man", "man", "1", argv[0], nullptr);
@@ -113,6 +114,9 @@ main(int argc, char **argv)
 		case 's':
 			NUMERIC_ARG(uint16_t, UINT16_MAX, PRIu16, strtou16, seed, "seed");
 			cfg.seeded = true;
+			break;
+		case 'S':
+			cfg.scanls = true;
 			break;
 		default:
 			usage();
@@ -200,8 +204,7 @@ reset:
 		dt = (double)((et - st) * 1000) / SDL_GetPerformanceFrequency();
 		SDL_Delay(16.67f > dt ? 16.67f - dt : 0);
 
-		if (c8.needs_redraw)
-			windrw();
+		windrw();
 
 		if (c8.DT > 0)
 			c8.DT--;

@@ -5,6 +5,7 @@
 #include <SDL.h>
 
 #include "cerr.h"
+#include "config.h"
 #include "emulator.h"
 #include "gui.h"
 #include "macros.h"
@@ -12,6 +13,7 @@
 #define SCR_SCALE 20
 #define SCR_WDTH  64
 #define SCR_HIGH  32
+#define SCNL_HGHT 2
 
 #define diesx(fmt) diex(fmt ": %s", SDL_GetError())
 
@@ -65,12 +67,9 @@ winfree(void)
 void
 windrw(void)
 {
-	SDL_Rect r = {
-		.x = 0,
-		.y = 0,
-		.w = SCR_SCALE,
-		.h = SCR_SCALE,
-	};
+	int sw, sh;
+	div_t qw, qh;
+	SDL_Rect r;
 	static const uint64_t cols[] = {
 		63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48,
 		47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32,
@@ -78,28 +77,36 @@ windrw(void)
 		15, 14, 13, 12, 11, 10, 9,  8,  7,  6,  5,  4,  3,  2,  1,  0,
 	};
 
-	c8.needs_redraw = false;
+	SDL_GetWindowSize(win, &sw, &sh);
 
-	for (size_t i = 0; i < lengthof(c8.screen); i++) {
-		if (c8.screen[i])
-			goto noclr;
-	}
+	r.w = (qw = div(sw, SCR_WDTH)).quot;
+	r.h = (qh = div(sh, SCR_HIGH)).quot;
+
 	SDL_SetRenderDrawColor(rndr, 0, 0, 0, UINT8_MAX);
 	SDL_RenderClear(rndr);
-	return;
 
-noclr:
 	for (size_t i = 0; i < lengthof(c8.screen); i++) {
 		for (size_t j = 64; j-- > 0;) {
 			bool set = (UINT64_C(1) << j) & c8.screen[i];
-			r.x = cols[j] * SCR_SCALE;
-			r.y = i * SCR_SCALE;
+			r.x = cols[j] * qw.quot + qw.rem / 2;
+			r.y = i * qh.quot + qh.rem / 2;
 			if (set)
 				SDL_SetRenderDrawColor(rndr, 0, UINT8_MAX, 0, UINT8_MAX);
 			else
 				SDL_SetRenderDrawColor(rndr, 0, 0, 0, UINT8_MAX);
 			SDL_RenderFillRect(rndr, &r);
 		}
+	}
+
+	if (cfg.scanls) {
+		SDL_Rect r = {
+			.w = sw,
+			.h = SCNL_HGHT,
+		};
+
+		SDL_SetRenderDrawColor(rndr, 0, 0, 0, UINT8_MAX);
+		for (r.y = 0; r.y < sh; r.y += SCNL_HGHT * 2)
+			SDL_RenderFillRect(rndr, &r);
 	}
 
 	SDL_RenderPresent(rndr);
