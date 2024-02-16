@@ -14,6 +14,7 @@ void wininit(void);
 void winfree(void);
 void winclr(void);
 void windrw(void);
+void auplay(bool);
 void readkb(void);
 
 extern guistate gs;

@@ -86,10 +86,9 @@ update_timers(void)
 
 	if (c8.ST > 0) {
 		c8.ST--;
-		// SDL_PauseAudioDevice(adev, 0); // Play sound
-	} else {
-		// SDL_PauseAudioDevice(adev, 1); // Pause sound
-	}
+		auplay(false);
+	} else
+		auplay(true);
 }
 
 void

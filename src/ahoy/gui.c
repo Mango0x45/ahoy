@@ -112,6 +112,12 @@ noclr:
 }
 
 void
+auplay(bool stop)
+{
+	SDL_PauseAudioDevice(adev, stop);
+}
+
+void
 readkb(void)
 {
 	SDL_Event e;
