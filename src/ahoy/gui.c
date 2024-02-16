@@ -146,31 +146,6 @@ readevnt(void)
 				estate = ES_RESET;
 				break;
 
-			// case SDLK_j:
-			// 	// 'j': Decrease color lerp rate
-			// 	if (config->color_lerp_rate > 0.1)
-			// 		config->color_lerp_rate -= 0.1;
-			// 	break;
-			//
-			// case SDLK_k:
-			// 	// 'k': Increase color lerp rate
-			// 	if (config->color_lerp_rate < 1.0)
-			// 		config->color_lerp_rate += 0.1;
-			// 	break;
-			//
-			// case SDLK_o:
-			// 	// 'o': Decrease Volume
-			// 	if (config->volume > 0)
-			// 		config->volume -= 500;
-			// 	break;
-			//
-			// case SDLK_p:
-			// 	// 'p': Increase Volume
-			// 	if (config->volume < INT16_MAX)
-			// 		config->volume += 500;
-			// 	break;
-
-			// Map qwerty keys to CHIP8 keypad
 			case SDLK_1:
 				c8.kbd[0x1] = true;
 				break;
