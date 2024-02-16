@@ -8,6 +8,7 @@ compile_commands.json
 
 # Test Files
 *.s
+*.bin
 
 # Compilation Output
 ahoy
