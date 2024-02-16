@@ -252,7 +252,7 @@ opexec(uint16_t op)
 			static bool any_key_pressed = false;
 			static uint8_t key = 0xFF;
 
-			for (uint8_t i = 0; key == 0xFF && i < lengthof(c8.kbd); i++) {
+			for (size_t i = 0; key == 0xFF && i < lengthof(c8.kbd); i++) {
 				if (c8.kbd[i]) {
 					key = i;
 					any_key_pressed = true;
