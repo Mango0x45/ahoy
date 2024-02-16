@@ -24,7 +24,7 @@ struct chip8 {
 	uint64_t screen[32];
 };
 
-void emuinit(struct u8view);
+void emuinit(struct u8view, const char *);
 void emutick(void);
 
 extern struct chip8 c8;

@@ -17,6 +17,7 @@ static void opexec(uint16_t);
 [[noreturn]] static void badins(uint16_t);
 
 struct chip8 c8;
+static const char *filename;
 
 /* Preload font into memory */
 static uint8_t mem[MEM_TOTAL] = {
@@ -39,12 +40,14 @@ static uint8_t mem[MEM_TOTAL] = {
 };
 
 void
-emuinit(struct u8view prog)
+emuinit(struct u8view prog, const char *fn)
 {
 	struct timespec tp;
 
+	filename = fn;
+
 	if (prog.len > MEM_FREE) {
-		diex("%s: binary of size %.1f KiB exceeds %d B maximum", "TODO",
+		diex("%s: binary of size %.1f KiB exceeds %d B maximum", filename,
 		     (double)prog.len / 1024, MEM_FREE);
 	}
 
@@ -75,7 +78,7 @@ opexec(uint16_t op)
 			break;
 		case 0x00EE:
 			if (c8.SP == 0)
-				diex("%s: stack pointer underflow", "TODO");
+				diex("%s: stack pointer underflow", filename);
 			c8.PC = c8.callstack[--c8.SP];
 			break;
 		default:
@@ -90,7 +93,7 @@ opexec(uint16_t op)
 
 	case 0x2:
 		if (c8.SP == lengthof(c8.callstack))
-			diex("%s: stack pointer overflow", "TODO");
+			diex("%s: stack pointer overflow", filename);
 		c8.callstack[c8.SP++] = c8.PC;
 		c8.PC = (op & 0xFFF) - 2;
 		break;
@@ -311,5 +314,5 @@ opexec(uint16_t op)
 void
 badins(uint16_t op)
 {
-	diex("%s: invalid opcode: %04X", "TODO", op);
+	diex("%s: invalid opcode: %04X", filename, op);
 }

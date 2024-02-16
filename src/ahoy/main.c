@@ -106,7 +106,7 @@ run(int fd, const char *fn)
 
 	free(buf);
 	wininit();
-	emuinit(u8strtou8(sb));
+	emuinit(u8strtou8(sb), fn);
 
 	while (gs != GUI_STOP) {
 		double dt;
