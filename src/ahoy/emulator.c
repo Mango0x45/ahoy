@@ -1,15 +1,12 @@
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
 
 #include <mbstring.h>
 
 #include "cerr.h"
 #include "emulator.h"
-#include "gui.h"
 #include "macros.h"
 
 #define MEM_RESERVED 0x200

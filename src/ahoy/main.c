@@ -2,19 +2,18 @@
 
 #include <fcntl.h>
 #include <getopt.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 #include <builder.h>
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 #include "cerr.h"
 #include "emulator.h"
 #include "gui.h"
 #include "macros.h"
-#include "SDL_timer.h"
 
 #define FPS           60
 #define INSTS_PER_SEC 700

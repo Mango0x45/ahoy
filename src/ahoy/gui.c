@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 #include "cerr.h"
 #include "emulator.h"

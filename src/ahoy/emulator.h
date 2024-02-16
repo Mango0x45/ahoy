@@ -1,6 +1,8 @@
 #ifndef AHOY_AHOY_EMULATOR_H
 #define AHOY_AHOY_EMULATOR_H
 
+#include <stdint.h>
+
 #include <mbstring.h>
 
 /* Uppercase variables represent registers.  The following registers exist:
