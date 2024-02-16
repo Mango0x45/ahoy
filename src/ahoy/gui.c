@@ -128,10 +128,10 @@ readkb(void)
 				gs = gs == GUI_RUNNING ? GUI_PAUSED : GUI_RUNNING;
 				break;
 
-			// case SDLK_EQUALS:
-			// 	init_chip8(chip8, *config, chip8->rom_name);
-			// 	break;
-			//
+			case SDLK_EQUALS:
+				emureset();
+				break;
+
 			// case SDLK_j:
 			// 	// 'j': Decrease color lerp rate
 			// 	if (config->color_lerp_rate > 0.1)

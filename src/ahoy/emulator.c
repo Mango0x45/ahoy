@@ -43,24 +43,30 @@ static uint8_t mem[MEM_TOTAL] = {
 void
 emuinit(struct u8view prog, const char *fn)
 {
-	struct timespec tp;
-
 	filename = fn;
-
 	if (prog.len > MEM_FREE) {
 		diex("%s: binary of size %.1f KiB exceeds %d B maximum", filename,
 		     (double)prog.len / 1024, MEM_FREE);
 	}
+	memcpy(mem + MEM_RESERVED, prog.p, prog.len);
+	emureset();
+}
 
+void
+emureset(void)
+{
+	struct timespec tp;
+
+	memset(&c8, 0, sizeof(c8));
 	c8.PC = MEM_RESERVED;
-	memcpy(mem + c8.PC, prog.p, prog.len);
 
-	if (cfg.seed > UINT16_MAX) {
+	if (cfg.seeded)
+		srand(cfg.seed);
+	else {
 		if (clock_gettime(CLOCK_REALTIME, &tp) == -1)
 			die("clock_gettime");
 		srand((tp.tv_sec ^ tp.tv_nsec) & UINT16_MAX);
-	} else
-		srand(cfg.seed);
+	}
 }
 
 void

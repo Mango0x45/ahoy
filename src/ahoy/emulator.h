@@ -26,6 +26,7 @@ struct chip8 {
 
 void emuinit(struct u8view, const char *);
 void emutick(void);
+void emureset(void);
 
 extern struct chip8 c8;
 

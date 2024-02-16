@@ -12,7 +12,6 @@ ahoy:
 	— Savestates
 	— Scanlines
 	— Other cool visual effects
-	— Machine reset
 c8c:
 	— Implement the C8 compiler
 	— Write assembly to stdout, allowing for such constructions as

@@ -52,9 +52,7 @@ STRTOX(uint16_t, u16)
 [[noreturn]] static void usage(void);
 static void run(int, const char *);
 
-struct config cfg = {
-	.seed = UINT16_MAX + 1,
-};
+struct config cfg;
 static const char *argv0;
 
 void
@@ -114,6 +112,7 @@ main(int argc, char **argv)
 			break;
 		case 's':
 			NUMERIC_ARG(uint16_t, UINT16_MAX, PRIu16, strtou16, seed, "seed");
+			cfg.seeded = true;
 			break;
 		default:
 			usage();
