@@ -91,7 +91,7 @@ windrw(void)
 noclr:
 	for (size_t i = 0; i < lengthof(c8.screen); i++) {
 		for (size_t j = 64; j-- > 0;) {
-			bool set = ((uint64_t)1 << j) & c8.screen[i];
+			bool set = (UINT64_C(1) << j) & c8.screen[i];
 			r.x = cols[j] * SCR_SCALE;
 			r.y = i * SCR_SCALE;
 			if (set)
