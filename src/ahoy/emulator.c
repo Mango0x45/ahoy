@@ -6,6 +6,7 @@
 #include <mbstring.h>
 
 #include "cerr.h"
+#include "config.h"
 #include "emulator.h"
 #include "macros.h"
 
@@ -54,9 +55,12 @@ emuinit(struct u8view prog, const char *fn)
 	c8.PC = MEM_RESERVED;
 	memcpy(mem + c8.PC, prog.p, prog.len);
 
-	if (clock_gettime(CLOCK_REALTIME, &tp) == -1)
-		die("clock_gettime");
-	srand(tp.tv_sec ^ tp.tv_nsec);
+	if (cfg.seed > UINT16_MAX) {
+		if (clock_gettime(CLOCK_REALTIME, &tp) == -1)
+			die("clock_gettime");
+		srand((tp.tv_sec ^ tp.tv_nsec) & UINT16_MAX);
+	} else
+		srand(cfg.seed);
 }
 
 void

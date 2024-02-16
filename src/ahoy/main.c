@@ -2,25 +2,41 @@
 
 #include <fcntl.h>
 #include <getopt.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include <builder.h>
+#include <mbstring.h>
 #include <SDL.h>
 
 #include "cerr.h"
+#include "config.h"
 #include "emulator.h"
 #include "gui.h"
 #include "macros.h"
+
+#if __has_include(<stdckdint.h>)
+#	include <stdckdint.h>
+#	warning "stdckdint.h now available; remove manual ckd_*() implementations"
+#elifdef __GNUC__
+#	define ckd_add(r, a, b) ((bool)__builtin_add_overflow(a, b, r))
+#	define ckd_mul(r, a, b) ((bool)__builtin_mul_overflow(a, b, r))
+#else
+#	error "Platform not supported at the moment"
+#endif
 
 #define FPS           60
 #define INSTS_PER_SEC 700
 
 [[noreturn]] static void usage(void);
 static void run(int, const char *);
+static uint16_t strtou16(const char8_t *, rune *);
 
+struct config cfg = {
+	.seed = UINT16_MAX + 1,
+};
 static const char *argv0;
 
 void
@@ -35,18 +51,32 @@ main(int argc, char **argv)
 {
 	int opt;
 	const struct option longopts[] = {
-		{"help",  no_argument, nullptr, 'h'},
-		{nullptr, no_argument, nullptr, 0  },
+		{"help",  no_argument,       nullptr, 'h'},
+		{"seed",  required_argument, nullptr, 's'},
+		{nullptr, no_argument,       nullptr, 0  },
 	};
 
 	argv0 = argv[0];
 	cerrinit(*argv);
 
-	while ((opt = getopt_long(argc, argv, "h", longopts, nullptr)) != -1) {
+	while ((opt = getopt_long(argc, argv, "hs:", longopts, nullptr)) != -1) {
 		switch (opt) {
 		case 'h':
 			execlp("man", "man", "1", argv[0], nullptr);
 			die("execlp: man 1 %s", argv[0]);
+		case 's': {
+			rune ch;
+			uint16_t n = strtou16(optarg, &ch);
+			if (ch >= '0' && ch <= '9')
+				diex("seed too large; may not exceed %" PRIu16, UINT16_MAX);
+			else if (ch) {
+				char8_t buf[U8_LEN_MAX];
+				int w = rtou8(buf, ch, sizeof(buf));
+				diex("invalid character ‘%.*s’; seed must be numeric", w, buf);
+			}
+			cfg.seed = n;
+			break;
+		}
 		default:
 			usage();
 		}
@@ -138,4 +168,21 @@ run(int fd, const char *fn)
 
 	u8strfree(sb);
 	winfree();
+}
+
+uint16_t
+strtou16(const char8_t *s, rune *ch)
+{
+	uint16_t n = 0;
+	size_t len = strlen(s);
+
+	while (u8next(ch, &s, &len)) {
+		if (!(*ch >= '0' && *ch <= '9'))
+			return -1;
+		if (ckd_mul(&n, n, 10) || ckd_add(&n, n, *ch - '0'))
+			return -1;
+	}
+
+	*ch = '\0';
+	return n;
 }
