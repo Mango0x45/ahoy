@@ -15,6 +15,7 @@
    I  — register to hold addresses
    */
 struct chip8 {
+	bool needs_redraw;
 	bool kbd[16];
 	uint8_t V[16];
 	uint8_t DT, ST, SP;

@@ -189,7 +189,7 @@ reset:
 		double dt;
 		uint64_t st, et;
 
-		readkb();
+		readevnt();
 		if (estate == ES_PAUSED)
 			continue;
 		if (estate == ES_RESET) {
@@ -204,7 +204,8 @@ reset:
 		dt = (double)((et - st) * 1000) / SDL_GetPerformanceFrequency();
 		SDL_Delay(16.67f > dt ? 16.67f - dt : 0);
 
-		windrw();
+		if (c8.needs_redraw)
+			windrw();
 
 		if (c8.DT > 0)
 			c8.DT--;

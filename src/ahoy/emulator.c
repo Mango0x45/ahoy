@@ -80,6 +80,7 @@ opexec(uint16_t op)
 	case 0x0:
 		switch (op) {
 		case 0x00E0:
+			c8.needs_redraw = true;
 			memset(c8.screen, 0, sizeof(c8.screen));
 			break;
 		case 0x00EE:
@@ -211,9 +212,9 @@ opexec(uint16_t op)
 		unsigned y = (op & 0x00F0) >> 4;
 		unsigned n = (op & 0x000F) >> 0;
 
+		c8.needs_redraw = true;
 		if (c8.I + n > lengthof(mem))
 			diex("%s: attempted to draw sprite beyond bounds of RAM", filename);
-
 		for (unsigned i = 0; i < n; i++) {
 			uint8_t spr_row = mem[c8.I + i];
 			uint8_t scr_row = c8.V[y] + i;

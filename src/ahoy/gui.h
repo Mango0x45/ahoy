@@ -15,7 +15,7 @@ void wininit(void);
 void winfree(void);
 void windrw(void);
 void auplay(bool);
-void readkb(void);
+void readevnt(void);
 
 extern emustate estate;
 

@@ -82,6 +82,7 @@ windrw(void)
 	r.w = (qw = div(sw, SCR_WDTH)).quot;
 	r.h = (qh = div(sh, SCR_HIGH)).quot;
 
+	c8.needs_redraw = false;
 	SDL_SetRenderDrawColor(rndr, 0, 0, 0, UINT8_MAX);
 	SDL_RenderClear(rndr);
 
@@ -119,7 +120,7 @@ auplay(bool stop)
 }
 
 void
-readkb(void)
+readevnt(void)
 {
 	SDL_Event e;
 
@@ -127,6 +128,12 @@ readkb(void)
 		switch (e.type) {
 		case SDL_QUIT:
 			estate = ES_STOP;
+			break;
+
+		case SDL_WINDOWEVENT:
+			/* For some reason checking for SDL_WINDOWEVENT_RESIZE and friends
+			   doesn’t work, so just catch all window events */
+			c8.needs_redraw = true;
 			break;
 
 		case SDL_KEYDOWN:
