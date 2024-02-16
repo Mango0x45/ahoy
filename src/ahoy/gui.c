@@ -63,13 +63,6 @@ winfree(void)
 }
 
 void
-winclr(void)
-{
-	SDL_SetRenderDrawColor(rndr, 0, 0, 0, UINT8_MAX);
-	SDL_RenderClear(rndr);
-}
-
-void
 windrw(void)
 {
 	SDL_Rect r = {
@@ -91,7 +84,8 @@ windrw(void)
 		if (c8.screen[i])
 			goto noclr;
 	}
-	winclr();
+	SDL_SetRenderDrawColor(rndr, 0, 0, 0, UINT8_MAX);
+	SDL_RenderClear(rndr);
 	return;
 
 noclr:
