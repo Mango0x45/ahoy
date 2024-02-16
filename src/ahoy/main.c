@@ -1,8 +1,10 @@
 #include <sys/stat.h>
 
+#include <err.h>
 #include <fcntl.h>
 #include <getopt.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -27,12 +29,28 @@
 #	error "Platform not supported at the moment"
 #endif
 
-#define FPS           60
-#define INSTS_PER_SEC 700
+#define FPS 60
+
+#define STRTOX(T, SUF) \
+	static T strto##SUF(const char8_t *s, rune *ch) \
+	{ \
+		T n = 0; \
+		size_t len = strlen(s); \
+		while (u8next(ch, &s, &len)) { \
+			if (!(*ch >= '0' && *ch <= '9')) \
+				return -1; \
+			if (ckd_mul(&n, n, 10) || ckd_add(&n, n, *ch - '0')) \
+				return -1; \
+		} \
+		*ch = '\0'; \
+		return n; \
+	}
+
+STRTOX(unsigned, u)
+STRTOX(uint16_t, u16)
 
 [[noreturn]] static void usage(void);
 static void run(int, const char *);
-static uint16_t strtou16(const char8_t *, rune *);
 
 struct config cfg = {
 	.seed = UINT16_MAX + 1,
@@ -42,45 +60,68 @@ static const char *argv0;
 void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [file]\n", argv0);
+	fprintf(stderr,
+	        "Usage: %s [-c clock speed] [-s seed] [file]\n"
+	        "       %s -h\n",
+	        argv0, argv0);
 	exit(EXIT_FAILURE);
 }
+
+#define NUMERIC_ARG(T, M, FMT, F, DST, N) \
+	do { \
+		rune ch; \
+		T n = F(optarg, &ch); \
+		if (ch >= '0' && ch <= '9') { \
+			warnx(N " too high; may not exceed %" FMT, M); \
+			usage(); \
+		} else if (ch) { \
+			char8_t buf[U8_LEN_MAX]; \
+			int w = rtou8(buf, ch, sizeof(buf)); \
+			warnx("invalid character ‘%.*s’; " N " must be numeric", w, buf); \
+			usage(); \
+		} \
+		cfg.DST = n; \
+	} while (false)
 
 int
 main(int argc, char **argv)
 {
 	int opt;
 	const struct option longopts[] = {
-		{"help",  no_argument,       nullptr, 'h'},
-		{"seed",  required_argument, nullptr, 's'},
-		{nullptr, no_argument,       nullptr, 0  },
+		{"clock-speed", required_argument, nullptr, 'c'},
+		{"help",        no_argument,       nullptr, 'h'},
+		{"seed",        required_argument, nullptr, 's'},
+		{nullptr,       no_argument,       nullptr, 0  },
 	};
 
 	argv0 = argv[0];
 	cerrinit(*argv);
 
-	while ((opt = getopt_long(argc, argv, "hs:", longopts, nullptr)) != -1) {
+	while ((opt = getopt_long(argc, argv, "c:hs:", longopts, nullptr)) != -1) {
 		switch (opt) {
 		case 'h':
 			execlp("man", "man", "1", argv[0], nullptr);
 			die("execlp: man 1 %s", argv[0]);
-		case 's': {
-			rune ch;
-			uint16_t n = strtou16(optarg, &ch);
-			if (ch >= '0' && ch <= '9')
-				diex("seed too large; may not exceed %" PRIu16, UINT16_MAX);
-			else if (ch) {
-				char8_t buf[U8_LEN_MAX];
-				int w = rtou8(buf, ch, sizeof(buf));
-				diex("invalid character ‘%.*s’; seed must be numeric", w, buf);
+		case 'c':
+			NUMERIC_ARG(unsigned, UINT_MAX, "u", strtou, cpu_hz,
+			            "cpu clock speed");
+			if (cfg.cpu_hz < FPS) {
+				warnx("cpu clock speed may not be lower than the framerate (%d "
+				      "FPS)",
+				      FPS);
+				usage();
 			}
-			cfg.seed = n;
 			break;
-		}
+		case 's':
+			NUMERIC_ARG(uint16_t, UINT16_MAX, PRIu16, strtou16, seed, "seed");
+			break;
 		default:
 			usage();
 		}
 	}
+
+	if (!cfg.cpu_hz)
+		cfg.cpu_hz = 700;
 
 	argc -= optind;
 	argv += optind;
@@ -147,7 +188,7 @@ run(int fd, const char *fn)
 			continue;
 
 		st = SDL_GetPerformanceCounter();
-		for (int i = 0; i < INSTS_PER_SEC / FPS; i++)
+		for (unsigned i = 0; i < cfg.cpu_hz / FPS; i++)
 			emutick();
 		et = SDL_GetPerformanceCounter();
 		dt = (double)((et - st) * 1000) / SDL_GetPerformanceFrequency();
@@ -168,21 +209,4 @@ run(int fd, const char *fn)
 
 	u8strfree(sb);
 	winfree();
-}
-
-uint16_t
-strtou16(const char8_t *s, rune *ch)
-{
-	uint16_t n = 0;
-	size_t len = strlen(s);
-
-	while (u8next(ch, &s, &len)) {
-		if (!(*ch >= '0' && *ch <= '9'))
-			return -1;
-		if (ckd_mul(&n, n, 10) || ckd_add(&n, n, *ch - '0'))
-			return -1;
-	}
-
-	*ch = '\0';
-	return n;
 }

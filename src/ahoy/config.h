@@ -6,6 +6,7 @@
 struct config {
 	/* Valid ranges are 0–UINT16_MAX.  >UINT16_MAX is for random seed. */
 	uint32_t seed;
+	unsigned cpu_hz;
 };
 
 extern struct config cfg;
