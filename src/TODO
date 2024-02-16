@@ -13,3 +13,9 @@ ahoy:
 	— Scanlines
 	— Other cool visual effects
 	— Machine reset
+c8c:
+	— Implement the C8 compiler
+	— Write assembly to stdout, allowing for such constructions as
+	  ‘c8c file.c8 | c8asm >out.bin’ or ‘c8c file.c8 | c8asm | ahoy’.
+c8dasm:
+	— Implement the disassembler.
