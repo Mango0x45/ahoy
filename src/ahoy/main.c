@@ -77,19 +77,6 @@ main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
-static void
-update_timers(void)
-{
-	if (c8.DT > 0)
-		c8.DT--;
-
-	if (c8.ST > 0) {
-		c8.ST--;
-		auplay(false);
-	} else
-		auplay(true);
-}
-
 void
 run(int fd, const char *fn)
 {
@@ -136,14 +123,17 @@ run(int fd, const char *fn)
 		dt = (double)((et - st) * 1000) / SDL_GetPerformanceFrequency();
 		SDL_Delay(16.67f > dt ? 16.67f - dt : 0);
 
-		// Update window with changes every 60hz
 		if (c8.needs_redraw)
 			windrw();
 
-		// Update delay & sound timers every 60hz
-		update_timers();
+		if (c8.DT > 0)
+			c8.DT--;
 
-		emutick();
+		if (c8.ST > 0) {
+			c8.ST--;
+			auplay(false);
+		} else
+			auplay(true);
 	}
 
 	u8strfree(sb);
