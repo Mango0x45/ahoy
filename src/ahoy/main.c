@@ -8,11 +8,16 @@
 #include <unistd.h>
 
 #include <builder.h>
+#include <SDL2/SDL.h>
 
 #include "cerr.h"
 #include "emulator.h"
 #include "gui.h"
 #include "macros.h"
+#include "SDL_timer.h"
+
+#define FPS           60
+#define INSTS_PER_SEC 700
 
 [[noreturn]] static void usage(void);
 static void run(int, const char *);
@@ -73,6 +78,20 @@ main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
+static void
+update_timers(void)
+{
+	if (c8.DT > 0)
+		c8.DT--;
+
+	if (c8.ST > 0) {
+		c8.ST--;
+		// SDL_PauseAudioDevice(adev, 0); // Play sound
+	} else {
+		// SDL_PauseAudioDevice(adev, 1); // Pause sound
+	}
+}
+
 void
 run(int fd, const char *fn)
 {
@@ -103,6 +122,32 @@ run(int fd, const char *fn)
 	free(buf);
 	wininit();
 	emuinit(u8strtou8(sb));
+
+	while (gs != GUI_STOP) {
+		double dt;
+		uint64_t st, et;
+
+		readkb();
+		if (gs == GUI_PAUSED)
+			continue;
+
+		st = SDL_GetPerformanceCounter();
+		for (int i = 0; i < INSTS_PER_SEC / FPS; i++)
+			emutick();
+		et = SDL_GetPerformanceCounter();
+		dt = (double)((et - st) * 1000) / SDL_GetPerformanceFrequency();
+		SDL_Delay(16.67f > dt ? 16.67f - dt : 0);
+
+		// Update window with changes every 60hz
+		if (c8.needs_redraw)
+			windrw();
+
+		// Update delay & sound timers every 60hz
+		update_timers();
+
+		emutick();
+	}
+
 	u8strfree(sb);
 	winfree();
 }

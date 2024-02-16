@@ -9,6 +9,7 @@
 
 #include "cerr.h"
 #include "emulator.h"
+#include "gui.h"
 #include "macros.h"
 
 #define MEM_RESERVED 0x200
@@ -18,23 +19,7 @@
 static void opexec(uint16_t);
 [[noreturn]] static void badins(uint16_t);
 
-/* Uppercase variables in this file will be used to represent registers.  The
-   following registers exist:
-
-   Vx — 16 general-purpose registers
-   DT — delay timer
-   ST — sound timer
-   SP — stack pointer
-   PC — program counter
-   I  — register to hold addresses
-   */
-static uint8_t V[16];
-static uint8_t DT, ST, SP;
-static uint16_t PC, I;
-
-static bool kbd[16];
-static uint16_t callstack[16];
-static uint64_t screen[32];
+struct chip8 c8;
 
 /* Preload font into memory */
 static uint8_t mem[MEM_TOTAL] = {
@@ -56,21 +41,6 @@ static uint8_t mem[MEM_TOTAL] = {
 	0xF0, 0x80, 0xF0, 0x80, 0x80, /* F */
 };
 
-static void
-scrdrw(void)
-{
-	fputs("\33[2J", stdout);
-	for (size_t i = 0; i < lengthof(screen); i++) {
-		for (size_t j = UINT64_WIDTH; j-- > 0;) {
-			char buf[U8_LEN_MAX];
-			bool bitset = (screen[i] & ((uint64_t)1 << j)) != 0;
-			int w = rtou8(buf, bitset ? U'█' : U' ', sizeof(buf));
-			fwrite(buf, 1, w, stdout);
-		}
-		putchar('\n');
-	}
-}
-
 void
 emuinit(struct u8view prog)
 {
@@ -81,8 +51,8 @@ emuinit(struct u8view prog)
 		     (double)prog.len / 1024, MEM_FREE);
 	}
 
-	PC = MEM_RESERVED;
-	memcpy(mem + PC, prog.p, prog.len);
+	c8.PC = MEM_RESERVED;
+	memcpy(mem + c8.PC, prog.p, prog.len);
 
 	if (clock_gettime(CLOCK_REALTIME, &tp) == -1)
 		die("clock_gettime");
@@ -92,9 +62,8 @@ emuinit(struct u8view prog)
 void
 emutick(void)
 {
-	opexec((mem[PC] << 8) | mem[PC + 1]);
-	scrdrw();
-	PC += 2;
+	opexec((mem[c8.PC] << 8) | mem[c8.PC + 1]);
+	c8.PC += 2;
 }
 
 void
@@ -104,12 +73,13 @@ opexec(uint16_t op)
 	case 0x0:
 		switch (op) {
 		case 0x00E0:
-			memset(screen, 0, sizeof(screen));
+			memset(c8.screen, 0, sizeof(c8.screen));
+			c8.needs_redraw = true;
 			break;
 		case 0x00EE:
-			if (SP == 0)
+			if (c8.SP == 0)
 				diex("%s: stack pointer underflow", "TODO");
-			PC = callstack[--SP];
+			c8.PC = c8.callstack[--c8.SP];
 			break;
 		default:
 			/* sys instruction is ignored */
@@ -118,47 +88,47 @@ opexec(uint16_t op)
 
 	case 0x1:
 		/* -2 because we +2 each iteration */
-		PC = (op & 0xFFF) - 2;
+		c8.PC = (op & 0xFFF) - 2;
 		break;
 
 	case 0x2:
-		if (SP == lengthof(callstack))
+		if (c8.SP == lengthof(c8.callstack))
 			diex("%s: stack pointer overflow", "TODO");
-		callstack[SP++] = PC;
-		PC = (op & 0xFFF) - 2;
+		c8.callstack[c8.SP++] = c8.PC;
+		c8.PC = (op & 0xFFF) - 2;
 		break;
 
 	case 0x3: {
 		unsigned x = (op & 0x0F00) >> 8;
-		if (V[x] == (op & 0xFF))
-			PC += 2;
+		if (c8.V[x] == (op & 0xFF))
+			c8.PC += 2;
 		break;
 	}
 
 	case 0x4: {
 		unsigned x = (op & 0x0F00) >> 8;
-		if (V[x] != (op & 0xFF))
-			PC += 2;
+		if (c8.V[x] != (op & 0xFF))
+			c8.PC += 2;
 		break;
 	}
 
 	case 0x5: {
 		unsigned x = (op & 0x0F00) >> 8;
 		unsigned y = (op & 0x00F0) >> 4;
-		if (V[x] == V[y])
-			PC += 2;
+		if (c8.V[x] == c8.V[y])
+			c8.PC += 2;
 		break;
 	}
 
 	case 0x6: {
 		unsigned x = (op & 0x0F00) >> 8;
-		V[x] = op & 0xFF;
+		c8.V[x] = op & 0xFF;
 		break;
 	}
 
 	case 0x7: {
 		unsigned x = (op & 0x0F00) >> 8;
-		V[x] += op & 0xFF;
+		c8.V[x] += op & 0xFF;
 		break;
 	}
 
@@ -168,38 +138,38 @@ opexec(uint16_t op)
 
 		switch (op & 0xF) {
 		case 0x0:
-			V[x] = V[y];
+			c8.V[x] = c8.V[y];
 			break;
 		case 0x1:
-			V[x] |= V[y];
+			c8.V[x] |= c8.V[y];
 			break;
 		case 0x2:
-			V[x] &= V[y];
+			c8.V[x] &= c8.V[y];
 			break;
 		case 0x3:
-			V[x] ^= V[y];
+			c8.V[x] ^= c8.V[y];
 			break;
 		case 0x4: {
-			unsigned n = V[x] + V[y];
-			V[x] = n;
-			V[0xF] = n > UINT8_MAX;
+			unsigned n = c8.V[x] + c8.V[y];
+			c8.V[x] = n;
+			c8.V[0xF] = n > UINT8_MAX;
 			break;
 		}
 		case 0x5:
-			V[0xF] = V[x] > V[y];
-			V[x] -= V[y];
+			c8.V[0xF] = c8.V[x] > c8.V[y];
+			c8.V[x] -= c8.V[y];
 			break;
 		case 0x6:
-			V[0xF] = V[x] & 1;
-			V[x] >>= 1;
+			c8.V[0xF] = c8.V[x] & 1;
+			c8.V[x] >>= 1;
 			break;
 		case 0x7:
-			V[0xF] = V[y] > V[x];
-			V[x] = V[y] - V[x];
+			c8.V[0xF] = c8.V[y] > c8.V[x];
+			c8.V[x] = c8.V[y] - c8.V[x];
 			break;
 		case 0xE:
-			V[0xF] = V[x] & 0x80;
-			V[x] <<= 1;
+			c8.V[0xF] = c8.V[x] & 0x80;
+			c8.V[x] <<= 1;
 			break;
 		default:
 			badins(op);
@@ -211,22 +181,22 @@ opexec(uint16_t op)
 	case 0x9: {
 		unsigned x = (op & 0x0F00) >> 8;
 		unsigned y = (op & 0x00F0) >> 4;
-		if (V[x] != V[y])
-			PC += 2;
+		if (c8.V[x] != c8.V[y])
+			c8.PC += 2;
 		break;
 	}
 
 	case 0xA:
-		I = op & 0xFFF;
+		c8.I = op & 0xFFF;
 		break;
 
 	case 0xB:
-		PC = (op & 0xFFF) + V[0] - 2;
+		c8.PC = (op & 0xFFF) + c8.V[0] - 2;
 		break;
 
 	case 0xC: {
 		unsigned x = (op & 0x0F00) >> 8;
-		V[x] = rand() & (op & 0xFF);
+		c8.V[x] = rand() & (op & 0xFF);
 		break;
 	}
 
@@ -237,17 +207,19 @@ opexec(uint16_t op)
 
 		for (unsigned i = 0; i < n; i++) {
 			/* TODO: bounds check? */
-			uint8_t spr_row = mem[I + i];
-			uint8_t scr_row = V[y] + i;
+			uint8_t spr_row = mem[c8.I + i];
+			uint8_t scr_row = c8.V[y] + i;
 			uint64_t msk;
 
-			if (scr_row >= lengthof(screen))
+			if (scr_row >= lengthof(c8.screen))
 				break;
 
-			msk = ((uint64_t)spr_row << (UINT64_WIDTH - 8)) >> V[x];
-			V[0xF] = screen[scr_row] & msk;
-			screen[scr_row] ^= msk;
+			msk = ((uint64_t)spr_row << (UINT64_WIDTH - 8)) >> c8.V[x];
+			c8.V[0xF] = (bool)(c8.screen[scr_row] & msk);
+			c8.screen[scr_row] ^= msk;
 		}
+
+		c8.needs_redraw = true;
 		break;
 	}
 
@@ -256,12 +228,12 @@ opexec(uint16_t op)
 
 		switch (op & 0xFF) {
 		case 0x9E:
-			if (V[x] < lengthof(kbd) && kbd[V[x]])
-				PC += 2;
+			if (c8.V[x] < lengthof(c8.kbd) && c8.kbd[c8.V[x]])
+				c8.PC += 2;
 			break;
 		case 0xA1:
-			if (V[x] >= lengthof(kbd) || !kbd[V[x]])
-				PC += 2;
+			if (c8.V[x] >= lengthof(c8.kbd) || !c8.kbd[c8.V[x]])
+				c8.PC += 2;
 			break;
 		default:
 			badins(op);
@@ -274,34 +246,58 @@ opexec(uint16_t op)
 
 		switch (op & 0xFF) {
 		case 0x07:
-			V[x] = DT;
+			c8.V[x] = c8.DT;
 			break;
-		case 0x0A:
-			badins(op);
+		case 0x0A: {
+			static bool any_key_pressed = false;
+			static uint8_t key = 0xFF;
+
+			for (uint8_t i = 0; key == 0xFF && i < lengthof(c8.kbd); i++) {
+				if (c8.kbd[i]) {
+					key = i;
+					any_key_pressed = true;
+					break;
+				}
+			}
+
+			if (!any_key_pressed)
+				c8.PC -= 2;
+			else {
+				if (c8.kbd[key])
+					c8.PC -= 2;
+				else {
+					c8.V[x] = key;
+					key = 0xFF;
+					any_key_pressed = false;
+				}
+			}
 			break;
+		}
 		case 0x15:
-			DT = V[x];
+			c8.DT = c8.V[x];
 			break;
 		case 0x18:
-			ST = V[x];
+			c8.ST = c8.V[x];
 			break;
 		case 0x1E:
-			I += V[x];
+			c8.I += c8.V[x];
 			break;
 		case 0x29:
 			/* Each character sprite is 5 bytes */
-			I = V[x] * 5;
+			c8.I = c8.V[x] * 5;
 			break;
 		case 0x33:
-			mem[I + 0] = V[x] / 100 % 10;
-			mem[I + 1] = V[x] / 10 % 10;
-			mem[I + 2] = V[x] / 1 % 10;
+			mem[c8.I + 0] = c8.V[x] / 100 % 10;
+			mem[c8.I + 1] = c8.V[x] / 10 % 10;
+			mem[c8.I + 2] = c8.V[x] / 1 % 10;
 			break;
 		case 0x55:
-			memcpy(mem + I, V, x);
+			memcpy(mem + c8.I, c8.V, x);
+			c8.I += x;
 			break;
 		case 0x65:
-			memcpy(V, mem + I, x);
+			memcpy(c8.V, mem + c8.I, x);
+			c8.I += x;
 			break;
 		default:
 			badins(op);
