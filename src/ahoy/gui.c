@@ -30,9 +30,9 @@ wininit(void)
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER) != 0)
 		diesx("failed to initialize SDL");
 
-	win = SDL_CreateWindow("Ahoy! CHIP-8 Emulator", SDL_WINDOWPOS_CENTERED,
-	                       SDL_WINDOWPOS_CENTERED, SCR_WDTH * SCR_SCALE,
-	                       SCR_HIGH * SCR_SCALE, 0);
+	win = SDL_CreateWindow("Ahoy! CHIP-8 Emulator", SDL_WINDOWPOS_UNDEFINED,
+	                       SDL_WINDOWPOS_UNDEFINED, SCR_WDTH * SCR_SCALE,
+	                       SCR_HIGH * SCR_SCALE, SDL_WINDOW_RESIZABLE);
 	if (!win)
 		diesx("failed to create window");
 
