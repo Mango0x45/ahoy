@@ -5,10 +5,11 @@
 #include <stdint.h>
 
 typedef enum {
-	GUI_RUNNING,
-	GUI_PAUSED,
-	GUI_STOP,
-} guistate;
+	ES_PAUSED,
+	ES_RESET,
+	ES_RUNNING,
+	ES_STOP,
+} emustate;
 
 void wininit(void);
 void winfree(void);
@@ -16,6 +17,6 @@ void windrw(void);
 void auplay(bool);
 void readkb(void);
 
-extern guistate gs;
+extern emustate estate;
 
 #endif /* !AHOY_AHOY_GUI_H */

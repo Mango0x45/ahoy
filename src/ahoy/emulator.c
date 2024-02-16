@@ -43,20 +43,15 @@ static uint8_t mem[MEM_TOTAL] = {
 void
 emuinit(struct u8view prog, const char *fn)
 {
+	struct timespec tp;
+
 	filename = fn;
 	if (prog.len > MEM_FREE) {
 		diex("%s: binary of size %.1f KiB exceeds %d B maximum", filename,
 		     (double)prog.len / 1024, MEM_FREE);
 	}
+
 	memcpy(mem + MEM_RESERVED, prog.p, prog.len);
-	emureset();
-}
-
-void
-emureset(void)
-{
-	struct timespec tp;
-
 	memset(&c8, 0, sizeof(c8));
 	c8.PC = MEM_RESERVED;
 

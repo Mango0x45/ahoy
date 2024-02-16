@@ -17,7 +17,7 @@
 
 static void audio_callback(void *, uint8_t *, int);
 
-guistate gs;
+emustate estate = ES_RUNNING;
 static SDL_Window *win;
 static SDL_Renderer *rndr;
 static SDL_AudioDeviceID adev;
@@ -119,17 +119,17 @@ readkb(void)
 	while (SDL_PollEvent(&e)) {
 		switch (e.type) {
 		case SDL_QUIT:
-			gs = GUI_STOP;
+			estate = ES_STOP;
 			break;
 
 		case SDL_KEYDOWN:
 			switch (e.key.keysym.sym) {
 			case SDLK_SPACE:
-				gs = gs == GUI_RUNNING ? GUI_PAUSED : GUI_RUNNING;
+				estate = estate == ES_RUNNING ? ES_PAUSED : ES_RUNNING;
 				break;
 
 			case SDLK_EQUALS:
-				emureset();
+				estate = ES_RESET;
 				break;
 
 			// case SDLK_j:

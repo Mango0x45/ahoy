@@ -176,15 +176,22 @@ run(int fd, const char *fn)
 
 	free(buf);
 	wininit();
+reset:
 	emuinit(u8strtou8(sb), fn);
+	windrw();
+	auplay(true);
 
-	while (gs != GUI_STOP) {
+	while (estate != ES_STOP) {
 		double dt;
 		uint64_t st, et;
 
 		readkb();
-		if (gs == GUI_PAUSED)
+		if (estate == ES_PAUSED)
 			continue;
+		if (estate == ES_RESET) {
+			estate = ES_RUNNING;
+			goto reset;
+		}
 
 		st = SDL_GetPerformanceCounter();
 		for (unsigned i = 0; i < cfg.cpu_hz / FPS; i++)
