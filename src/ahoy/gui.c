@@ -1,4 +1,5 @@
 #include <err.h>
+#include <stdbit.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -87,15 +88,14 @@ windrw(void)
 	SDL_SetRenderDrawColor(rndr, 0, 0, 0, UINT8_MAX);
 	SDL_RenderClear(rndr);
 
+	SDL_SetRenderDrawColor(rndr, 0, UINT8_MAX, 0, UINT8_MAX);
 	for (size_t i = 0; i < lengthof(c8.screen); i++) {
-		for (size_t j = 64; j-- > 0;) {
-			bool set = (UINT64_C(1) << j) & c8.screen[i];
+		uint64_t row = c8.screen[i];
+		while (row) {
+			int j = stdc_first_trailing_one(row) - 1;
 			r.x = cols[j] * qw.quot + qw.rem / 2;
 			r.y = i * qh.quot + qh.rem / 2;
-			if (set)
-				SDL_SetRenderDrawColor(rndr, 0, UINT8_MAX, 0, UINT8_MAX);
-			else
-				SDL_SetRenderDrawColor(rndr, 0, 0, 0, UINT8_MAX);
+			row ^= 1ULL << j;
 			SDL_RenderFillRect(rndr, &r);
 		}
 	}
