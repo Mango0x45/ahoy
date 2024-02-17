@@ -142,9 +142,12 @@ readevnt(void)
 			case SDLK_SPACE:
 				estate = estate == ES_RUNNING ? ES_PAUSED : ES_RUNNING;
 				break;
-
 			case SDLK_EQUALS:
 				estate = ES_RESET;
+				break;
+			case SDLK_l:
+				cfg.scanls = !cfg.scanls;
+				windrw();
 				break;
 
 			case SDLK_1:
