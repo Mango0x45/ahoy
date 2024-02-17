@@ -134,7 +134,7 @@ readevnt(void)
 		case SDL_WINDOWEVENT:
 			/* For some reason checking for SDL_WINDOWEVENT_RESIZE and friends
 			   doesn’t work, so just catch all window events */
-			c8.needs_redraw = true;
+			windrw();
 			break;
 
 		case SDL_KEYDOWN:
