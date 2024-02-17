@@ -4,13 +4,9 @@ ahoy:
 	— NCurses port?
 	— SCHIP support
 	— User-configuration:
-		— Keybindings
-		— Colors
-		— Sound
 		— Volume (Also at runtime and as CLI param)
 		— Clock Speed (Also at runtime and as CLI param)
 	— Savestates
-	— Scanlines
 	— Other cool visual effects
 c8c:
 	— Implement the C8 compiler
