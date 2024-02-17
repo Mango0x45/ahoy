@@ -212,6 +212,7 @@ opexec(uint16_t op)
 		unsigned y = (op & 0x00F0) >> 4;
 		unsigned n = (op & 0x000F) >> 0;
 
+		c8.V[0xF] = 0;
 		c8.needs_redraw = true;
 		if (c8.I + n > lengthof(mem))
 			diex("%s: attempted to draw sprite beyond bounds of RAM", filename);
@@ -224,7 +225,7 @@ opexec(uint16_t op)
 				break;
 
 			msk = ((uint64_t)spr_row << (64 - 8)) >> c8.V[x];
-			c8.V[0xF] = (bool)(c8.screen[scr_row] & msk);
+			c8.V[0xF] |= (bool)(c8.screen[scr_row] & msk);
 			c8.screen[scr_row] ^= msk;
 		}
 
