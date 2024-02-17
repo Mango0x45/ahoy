@@ -102,8 +102,8 @@ main(int argc, char **argv)
 	} else if (streq(*argv, "clean")) {
 		cmd_t c = {0};
 		cmdadd(&c, "find", ".", "-type", "f", "(", "-name", "*.[ao]", "-or",
-		       "-name", "c8asm", "-or", "-path", "./src/c8asm/autogen-lookup.h",
-		       ")", "-delete");
+		       "-name", "ahoy", "-or", "-name", "c8asm", "-or", "-path",
+		       "./src/c8asm/autogen-lookup.h", ")", "-delete");
 		CMDPRC(c);
 	} else {
 		warnx("invalid subcommand -- '%s'", *argv);
