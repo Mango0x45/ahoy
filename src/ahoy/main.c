@@ -20,6 +20,7 @@
 #include "gui.h"
 #include "macros.h"
 
+/* TODO: Remove this once stdckdint.h is in GCC / Glibc */
 #if __has_include(<stdckdint.h>)
 #	include <stdckdint.h>
 #	warning "stdckdint.h now available; remove manual ckd_*() implementations"
@@ -27,7 +28,9 @@
 #	define ckd_add(r, a, b) ((bool)__builtin_add_overflow(a, b, r))
 #	define ckd_mul(r, a, b) ((bool)__builtin_mul_overflow(a, b, r))
 #else
-#	error "Platform not supported at the moment"
+#	define ckd_add(r, a, b)
+#	define ckd_mul(r, a, b)
+#	warning "ckd_*() not supported on the current platform"
 #endif
 
 #define FPS 60
@@ -47,20 +50,24 @@
 		return n; \
 	}
 
+STRTOX(int, i)
 STRTOX(unsigned, u)
 STRTOX(uint16_t, u16)
 
 [[noreturn]] static void usage(void);
 static void run(int, const char *);
 
-struct config cfg;
+struct config cfg = {
+	.cpu_hz = 700,
+	.vol = 3000,
+};
 static const char *argv0;
 
 void
 usage(void)
 {
 	fprintf(stderr,
-	        "Usage: %s [-S] [-c clock speed] [-s seed] [file]\n"
+	        "Usage: %s [-S] [-c clock speed] [-s seed] [-v volume] [file]\n"
 	        "       %s -h\n",
 	        argv0, argv0);
 	exit(EXIT_FAILURE);
@@ -70,7 +77,10 @@ usage(void)
 	do { \
 		rune ch; \
 		T n = F(optarg, &ch); \
-		if (ch >= '0' && ch <= '9') { \
+		_Pragma("GCC diagnostic push"); \
+		_Pragma("GCC diagnostic ignored \"-Wtype-limits\""); \
+		if (n > M || (ch >= '0' && ch <= '9')) { \
+			_Pragma("GCC diagnostic pop"); \
 			warnx(N " too high; may not exceed %" FMT, M); \
 			usage(); \
 		} else if (ch) { \
@@ -91,13 +101,15 @@ main(int argc, char **argv)
 		{"help",        no_argument,       nullptr, 'h'},
 		{"seed",        required_argument, nullptr, 's'},
 		{"scanlines",   no_argument,       nullptr, 'S'},
+		{"volume",      required_argument, nullptr, 'v'},
 		{nullptr,       no_argument,       nullptr, 0  },
 	};
 
 	argv0 = argv[0];
 	cerrinit(*argv);
 
-	while ((opt = getopt_long(argc, argv, "c:hs:S", longopts, nullptr)) != -1) {
+	while ((opt = getopt_long(argc, argv, "c:hs:Sv:", longopts, nullptr)) != -1)
+	{
 		switch (opt) {
 		case 'h':
 			execlp("man", "man", "1", argv[0], nullptr);
@@ -119,13 +131,13 @@ main(int argc, char **argv)
 		case 'S':
 			cfg.scanls = true;
 			break;
+		case 'v':
+			NUMERIC_ARG(int, VOLMAX, "d", strtoi, vol, "volume");
+			break;
 		default:
 			usage();
 		}
 	}
-
-	if (!cfg.cpu_hz)
-		cfg.cpu_hz = 700;
 
 	argc -= optind;
 	argv += optind;

@@ -1,4 +1,5 @@
 #include <err.h>
+#include <limits.h>
 #include <stdbit.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -45,7 +46,7 @@ wininit(void)
 
 	want = (SDL_AudioSpec){
 		.freq = 44100,
-		.format = AUDIO_S16LSB,
+		.format = AUDIO_S16SYS,
 		.channels = 1,
 		.samples = 512,
 		.callback = audio_callback,
@@ -142,8 +143,14 @@ readevnt(void)
 			case SDLK_SPACE:
 				estate = estate == ES_RUNNING ? ES_PAUSED : ES_RUNNING;
 				break;
-			case SDLK_EQUALS:
+			case SDLK_p:
 				estate = ES_RESET;
+				break;
+			case SDLK_EQUALS:
+				cfg.vol = MIN(cfg.vol + 500, VOLMAX);
+				break;
+			case SDLK_MINUS:
+				cfg.vol = MAX(cfg.vol - 500, 0);
 				break;
 			case SDLK_l:
 				cfg.scanls = !cfg.scanls;
@@ -269,5 +276,5 @@ audio_callback(void *, uint8_t *stream, int len)
 	   crest of the wave, this will add the volume, otherwise it is the trough
 	   of the wave, and will add ‘negative’ volume. */
 	for (int i = 0; i < len / 2; i++)
-		data[i] = ((si++ / half_sqrwv_p) & 1) ? -3000 : +3000;
+		data[i] = ((si++ / half_sqrwv_p) & 1) ? -cfg.vol : +cfg.vol;
 }
