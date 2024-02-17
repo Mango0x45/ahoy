@@ -3,14 +3,16 @@
 
 #include <stdint.h>
 
-#define VOLMAX 10'000
+#define FPS      60
+#define CPUHZMAX 10'000
+#define VOLMAX   10'000
 
 struct config {
 	bool scanls;
 	bool seeded;
 	uint16_t seed;
-	unsigned cpu_hz;
 	int vol;
+	int cpu_hz;
 };
 
 extern struct config cfg;

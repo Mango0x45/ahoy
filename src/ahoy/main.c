@@ -33,8 +33,6 @@
 #	warning "ckd_*() not supported on the current platform"
 #endif
 
-#define FPS 60
-
 #define STRTOX(T, SUF) \
 	static T strto##SUF(const char8_t *s, rune *ch) \
 	{ \
@@ -51,7 +49,6 @@
 	}
 
 STRTOX(int, i)
-STRTOX(unsigned, u)
 STRTOX(uint16_t, u16)
 
 [[noreturn]] static void usage(void);
@@ -115,8 +112,7 @@ main(int argc, char **argv)
 			execlp("man", "man", "1", argv[0], nullptr);
 			die("execlp: man 1 %s", argv[0]);
 		case 'c':
-			NUMERIC_ARG(unsigned, UINT_MAX, "u", strtou, cpu_hz,
-			            "cpu clock speed");
+			NUMERIC_ARG(int, CPUHZMAX, "d", strtoi, cpu_hz, "cpu clock speed");
 			if (cfg.cpu_hz < FPS) {
 				warnx("cpu clock speed may not be lower than the framerate (%d "
 				      "FPS)",
@@ -211,7 +207,7 @@ reset:
 		}
 
 		st = SDL_GetPerformanceCounter();
-		for (unsigned i = 0; i < cfg.cpu_hz / FPS; i++)
+		for (int i = 0; i < cfg.cpu_hz / FPS; i++)
 			emutick();
 		et = SDL_GetPerformanceCounter();
 		dt = (double)((et - st) * 1000) / SDL_GetPerformanceFrequency();

@@ -143,18 +143,26 @@ readevnt(void)
 			case SDLK_SPACE:
 				estate = estate == ES_RUNNING ? ES_PAUSED : ES_RUNNING;
 				break;
+			case SDLK_l:
+				cfg.scanls = !cfg.scanls;
+				windrw();
+				break;
 			case SDLK_p:
 				estate = ES_RESET;
 				break;
+
 			case SDLK_EQUALS:
 				cfg.vol = MIN(cfg.vol + 500, VOLMAX);
 				break;
 			case SDLK_MINUS:
 				cfg.vol = MAX(cfg.vol - 500, 0);
 				break;
-			case SDLK_l:
-				cfg.scanls = !cfg.scanls;
-				windrw();
+
+			case SDLK_PERIOD:
+				cfg.cpu_hz = MIN(cfg.cpu_hz + 10, CPUHZMAX);
+				break;
+			case SDLK_COMMA:
+				cfg.cpu_hz = MAX(cfg.cpu_hz - 10, FPS);
 				break;
 
 			case SDLK_1:
