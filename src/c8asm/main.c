@@ -38,7 +38,10 @@ main(int argc, char **argv)
 			execlp("man", "man", "1", argv[0], nullptr);
 			die("execlp: man 1 %s", argv[0]);
 		default:
-			fprintf(stderr, "Usage: %s [file ...]\n", argv[0]);
+			fprintf(stderr,
+			        "Usage: %s [file ...]\n"
+			        "       %s -h\n",
+			        argv[0], argv[0]);
 			exit(EXIT_FAILURE);
 		}
 	}
