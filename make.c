@@ -29,9 +29,9 @@
 #endif
 #define CFLAGS_DBG CFLAGS, "-Og", "-ggdb3", "-DDEBUG=1"
 #ifdef __APPLE__
-#	define CFLAGS_RLS CFLAGS, "-O3"
+#	define CFLAGS_RLS CFLAGS, "-O3", "-flto"
 #else
-#	define CFLAGS_RLS CFLAGS, "-O3", "-march=native", "-mtune=native"
+#	define CFLAGS_RLS CFLAGS, "-O3", "-flto", "-march=native", "-mtune=native"
 #endif
 
 #define streq(x, y) (!strcmp(x, y))
@@ -65,7 +65,7 @@ static bool librune_built;
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [-flr]\n", argv0);
+	fprintf(stderr, "Usage: %s [-fr]\n", argv0);
 	exit(EXIT_FAILURE);
 }
 
@@ -75,7 +75,6 @@ main(int argc, char **argv)
 	int opt;
 	const struct option longopts[] = {
 		{"force",   no_argument, nullptr, 'f'},
-		{"lto",     no_argument, nullptr, 'l'},
 		{"release", no_argument, nullptr, 'r'},
 		{nullptr,   no_argument, nullptr, 0  },
 	};
@@ -84,7 +83,7 @@ main(int argc, char **argv)
 	rebuild();
 	argv0 = *argv;
 
-	while ((opt = getopt_long(argc, argv, "flr", longopts, nullptr)) != -1) {
+	while ((opt = getopt_long(argc, argv, "fr", longopts, nullptr)) != -1) {
 		switch (opt) {
 		case '?':
 			usage();
@@ -147,8 +146,6 @@ build_common(void)
 
 		c.dst = objs[i];
 		cmdaddv(&c, sv.buf, sv.len);
-		if (FLAGSET('l'))
-			cmdadd(&c, "-flto");
 		cmdadd(&c, "-c", g.gl_pathv[i], "-o", objs[i]);
 		CMDPRC2(c);
 	}
@@ -195,8 +192,6 @@ build_ahoy(void)
 
 		c.dst = objs[i];
 		cmdaddv(&c, sv.buf, sv.len);
-		if (FLAGSET('l'))
-			cmdadd(&c, "-flto");
 		cmdadd(&c, "-Isrc/common", "-Ivendor/da", "-Ivendor/librune/include");
 		cmdaddv(&c, pc.buf, pc.len);
 		cmdadd(&c, "-c", g.gl_pathv[i], "-o", objs[i]);
@@ -213,8 +208,6 @@ build_ahoy(void)
 
 	c.dst = "ahoy";
 	cmdaddv(&c, sv.buf, sv.len);
-	if (FLAGSET('l'))
-		cmdadd(&c, "-flto");
 	if (pcquery(&pc, "sdl2", PKGC_LIBS))
 		cmdaddv(&c, pc.buf, pc.len);
 	else
@@ -277,8 +270,6 @@ build_c8asm(void)
 
 		c.dst = objs[i];
 		cmdaddv(&c, sv.buf, sv.len);
-		if (FLAGSET('l'))
-			cmdadd(&c, "-flto");
 		cmdadd(&c, "-Isrc/common", "-Ivendor/da", "-Ivendor/librune/include");
 		cmdadd(&c, "-c", g.gl_pathv[i], "-o", objs[i]);
 		CMDPRC2(c);
@@ -293,8 +284,6 @@ build_c8asm(void)
 
 	c.dst = "c8asm";
 	cmdaddv(&c, sv.buf, sv.len);
-	if (FLAGSET('l'))
-		cmdadd(&c, "-flto");
 	cmdadd(&c, "-o", c.dst);
 	cmdaddv(&c, objs, g.gl_pathc);
 	cmdadd(&c, "src/common/cerr.o", "vendor/librune/librune.a");
@@ -341,8 +330,6 @@ build_c8dump(void)
 
 		c.dst = objs[i];
 		cmdaddv(&c, sv.buf, sv.len);
-		if (FLAGSET('l'))
-			cmdadd(&c, "-flto");
 		cmdadd(&c, "-Isrc/common", "-Ivendor/da", "-Ivendor/librune/include");
 		cmdadd(&c, "-c", g.gl_pathv[i], "-o", objs[i]);
 		CMDPRC2(c);
@@ -357,8 +344,6 @@ build_c8dump(void)
 
 	c.dst = "c8dump";
 	cmdaddv(&c, sv.buf, sv.len);
-	if (FLAGSET('l'))
-		cmdadd(&c, "-flto");
 	cmdadd(&c, "-o", c.dst);
 	cmdaddv(&c, objs, g.gl_pathc);
 	cmdadd(&c, "src/common/cerr.o", "vendor/librune/librune.a");
