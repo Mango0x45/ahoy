@@ -13,6 +13,7 @@ compile_commands.json
 # Compilation Output
 ahoy
 c8asm
+c8dump
 !src/*
 make
 *.o

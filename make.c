@@ -52,6 +52,7 @@
 
 static void build_ahoy(void);
 static void build_c8asm(void);
+static void build_c8dump(void);
 static void build_common(void);
 static void build_librune(void);
 static int globerr(const char *, int);
@@ -97,6 +98,7 @@ main(int argc, char **argv)
 
 	if (argc == 0) {
 		build_common();
+		build_c8dump();
 		build_c8asm();
 		build_ahoy();
 	} else if (streq(*argv, "clean")) {
@@ -290,6 +292,70 @@ build_c8asm(void)
 	env_or_default(&sv, "LDFLAGS", nullptr);
 
 	c.dst = "c8asm";
+	cmdaddv(&c, sv.buf, sv.len);
+	if (FLAGSET('l'))
+		cmdadd(&c, "-flto");
+	cmdadd(&c, "-o", c.dst);
+	cmdaddv(&c, objs, g.gl_pathc);
+	cmdadd(&c, "src/common/cerr.o", "vendor/librune/librune.a");
+	CMDPRC2(c);
+
+out:
+	globfree(&g);
+	strvfree(&sv);
+	for (size_t i = 0; i < g.gl_pathc; i++)
+		free(objs[i]);
+}
+
+void
+build_c8dump(void)
+{
+	glob_t g;
+	char **objs;
+	cmd_t c = {0};
+	struct strv sv = {0};
+
+	build_librune();
+
+	if (glob("src/c8dump/*.c", 0, globerr, &g))
+		die("glob");
+
+	objs = bufalloc(nullptr, g.gl_pathc, sizeof(*objs));
+	for (size_t i = 0; i < g.gl_pathc; i++) {
+		char *s = strdup(g.gl_pathv[i]);
+		if (!s)
+			die("strdup");
+		s[strlen(s) - 1] = 'o';
+		objs[i] = s;
+	}
+
+	env_or_default(&sv, "CC", CC);
+	if (FLAGSET('r'))
+		env_or_default(&sv, "CFLAGS", CFLAGS_RLS);
+	else
+		env_or_default(&sv, "CFLAGS", CFLAGS_DBG);
+
+	for (size_t i = 0; i < g.gl_pathc; i++) {
+		if (!FLAGSET('f') && !foutdated(objs[i], g.gl_pathv[i]))
+			continue;
+
+		c.dst = objs[i];
+		cmdaddv(&c, sv.buf, sv.len);
+		if (FLAGSET('l'))
+			cmdadd(&c, "-flto");
+		cmdadd(&c, "-Isrc/common", "-Ivendor/da", "-Ivendor/librune/include");
+		cmdadd(&c, "-c", g.gl_pathv[i], "-o", objs[i]);
+		CMDPRC2(c);
+	}
+
+	if (!FLAGSET('f') && !foutdatedv("c8dump", (const char **)objs, g.gl_pathc))
+		goto out;
+
+	strvfree(&sv);
+	env_or_default(&sv, "CC", CC);
+	env_or_default(&sv, "LDFLAGS", nullptr);
+
+	c.dst = "c8dump";
 	cmdaddv(&c, sv.buf, sv.len);
 	if (FLAGSET('l'))
 		cmdadd(&c, "-flto");
