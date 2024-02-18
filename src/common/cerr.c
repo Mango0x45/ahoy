@@ -13,6 +13,8 @@
 static bool color;
 static const char *progname;
 
+static const char *_bold, *_done;
+
 void
 cerrinit(const char *s)
 {
@@ -24,6 +26,14 @@ cerrinit(const char *s)
 		if (!ev || !*ev)
 			color = true;
 	}
+
+	if (color) {
+		_bold = SGR_BOLD;
+		_done = SGR_DONE;
+	} else {
+		_bold = "";
+		_done = "";
+	}
 }
 
 void
@@ -33,8 +43,7 @@ die(const char *fmt, ...)
 	int e = errno;
 
 	va_start(ap, fmt);
-	fprintf(stderr, "%s%s:%s ", color ? SGR_BOLD : "", progname,
-	        color ? SGR_DONE : "");
+	fprintf(stderr, "%s%s:%s ", _bold, progname, _done);
 	vfprintf(stderr, fmt, ap);
 	fprintf(stderr, ": %s\n", strerror(e));
 	va_end(ap);
@@ -48,8 +57,7 @@ diex(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	fprintf(stderr, "%s%s:%s ", color ? SGR_BOLD : "", progname,
-	        color ? SGR_DONE : "");
+	fprintf(stderr, "%s%s:%s ", _bold, progname, _done);
 	vfprintf(stderr, fmt, ap);
 	fputc('\n', stderr);
 	va_end(ap);
@@ -63,8 +71,7 @@ die_with_off(const char *file, size_t off, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	fprintf(stderr, "%s%s:%s:%zu:%s ", color ? SGR_BOLD : "", progname, file,
-	        off, color ? SGR_DONE : "");
+	fprintf(stderr, "%s%s:%s:%zu:%s ", _bold, progname, file, off, _done);
 	vfprintf(stderr, fmt, ap);
 	fputc('\n', stderr);
 	va_end(ap);
