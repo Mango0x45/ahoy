@@ -47,7 +47,7 @@ emuinit(struct u8view prog, const char *fn)
 
 	filename = fn;
 	if (prog.len > MEM_FREE) {
-		diex("%s: binary of size %.1f KiB exceeds %d B maximum", filename,
+		diex("%s: binary of size %.1f KiB exceeds %d B maximum", filename,
 		     (double)prog.len / 1024, MEM_FREE);
 	}
 
