@@ -19,7 +19,6 @@
 
 #define SGR_BOLD "\33[1m"
 #define SGR_DONE "\33[0m"
-#define SGR_WARN "\33[1;35m"
 #define SGR_ERR  "\33[1;31m"
 
 int sizelen(size_t);
@@ -27,7 +26,7 @@ int sizelen(size_t);
 static bool color;
 static const char *progname;
 
-static const char *_bold, *_done, *_warn, *_err;
+static const char *_bold, *_done, *_err;
 
 void
 cerrinit(const char *s)
@@ -43,10 +42,9 @@ cerrinit(const char *s)
 	if (color) {
 		_bold = SGR_BOLD;
 		_done = SGR_DONE;
-		_warn = SGR_WARN;
 		_err = SGR_ERR;
 	} else
-		_bold = _done = _warn = _err = "";
+		_bold = _done = _err = "";
 }
 
 void

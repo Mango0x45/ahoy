@@ -10,9 +10,6 @@
 #define ISDIGIT(n)   ((n) >= '0' && (n) <= '9')
 #define U8MOV(sv, n) ((sv)->p += (n), (sv)->len -= (n))
 
-#define die_at_pos_with_code(HL, OFF, ...) \
-	die_at_pos_with_code(filename, filebuf, (HL), (OFF), __VA_ARGS__)
-
 #define E_BASE         "integer with invalid base specifier"
 #define E_EXTRA        "unknown extraneous character"
 #define E_IDENTCCHAR   "illegal character in identifier"
@@ -68,12 +65,12 @@ lexfile(void)
 	return toks;
 }
 
+#define DIE_AT_POS_WITH_CODE2(HL, ...) \
+	DIE_AT_POS_WITH_CODE((HL), sv->p - w, __VA_ARGS__)
+
 void
 lexline(struct tokens *toks, struct u8view *sv)
 {
-#define _die_at_pos_with_code(HL, ...) \
-	die_at_pos_with_code((HL), sv->p - baseptr - w, __VA_ARGS__)
-
 	struct token tok;
 
 	for (;;) {
@@ -117,7 +114,7 @@ lexline(struct tokens *toks, struct u8view *sv)
 					break;
 				default:
 					if (!ISDIGIT(ch))
-						_die_at_pos_with_code(tok.sv, E_BASE);
+						DIE_AT_POS_WITH_CODE2(tok.sv, E_BASE);
 				}
 			}
 
@@ -130,10 +127,10 @@ out:
 			if (ch == '.') {
 				tok.sv.len += w = u8next(&ch, &sv->p, &sv->len);
 				if (!w || rprop_is_pat_ws(ch))
-					_die_at_pos_with_code(tok.sv, E_IDENTLOST);
+					DIE_AT_POS_WITH_CODE2(tok.sv, E_IDENTLOST);
 				if (ch != '_' && !rprop_is_xids(ch)) {
 					U8MOV(&tok.sv, 1);
-					_die_at_pos_with_code(tok.sv, E_IDENTSCHAR);
+					DIE_AT_POS_WITH_CODE2(tok.sv, E_IDENTSCHAR);
 				}
 			}
 
@@ -147,7 +144,7 @@ out:
 						.p = sv->p - w,
 						.len = w,
 					};
-					_die_at_pos_with_code(hl, E_IDENTCCHAR);
+					DIE_AT_POS_WITH_CODE2(hl, E_IDENTCCHAR);
 				}
 
 				tok.sv.len += w;
@@ -159,7 +156,7 @@ out:
 				if (ch == '"')
 					goto found;
 			}
-			_die_at_pos_with_code(tok.sv, E_UNTERMINATED);
+			DIE_AT_POS_WITH_CODE2(tok.sv, E_UNTERMINATED);
 found:
 		} else if (ch == ':') {
 			tok.kind = T_COLON;
@@ -167,7 +164,7 @@ found:
 			goto end;
 		} else {
 			struct u8view hl = {.p = sv->p - w, .len = w};
-			_die_at_pos_with_code(hl, E_EXTRA);
+			DIE_AT_POS_WITH_CODE2(hl, E_EXTRA);
 		}
 
 		/* The colon is the only token that isn’t whitespace separated */
@@ -175,7 +172,7 @@ found:
 			w = u8next(&ch, &sv->p, &sv->len);
 			if (!w || !rprop_is_pat_ws(ch)) {
 				struct u8view hl = {.p = sv->p - w, .len = w};
-				_die_at_pos_with_code(hl, E_EXTRA);
+				DIE_AT_POS_WITH_CODE2(hl, E_EXTRA);
 			}
 		}
 
@@ -189,9 +186,9 @@ end:;
 		.sv.len = 0,
 	};
 	dapush(toks, tok);
-
-#undef _die_at_pos_with_code
 }
+
+#undef DIE_AT_POS_WITH_CODE2
 
 bool
 skipws(struct u8view *sv)

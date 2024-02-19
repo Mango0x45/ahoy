@@ -54,16 +54,14 @@ getaddr(struct raw_addr a)
 	   labels that aren’t integer-literals by that. */
 	if (lbl = getlabel(a.sv))
 		return lbl->addr + 0x200;
-	die_at_pos_with_code(filename, filebuf, a.sv, a.sv.p - baseptr, E_LNEXISTS);
+	DIE_AT_POS_WITH_CODE(a.sv, a.sv.p, E_LNEXISTS);
 }
 
 void
 pushlabel(struct labels *dst, struct label lbl)
 {
-	if (getlabel(lbl.sv)) {
-		die_at_pos_with_code(filename, filebuf, lbl.sv, lbl.sv.p - baseptr,
-		                     E_LEXISTS);
-	}
+	if (getlabel(lbl.sv))
+		DIE_AT_POS_WITH_CODE(lbl.sv, lbl.sv.p, E_LEXISTS);
 	dapush(dst, lbl);
 }
 

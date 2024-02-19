@@ -11,14 +11,11 @@
 #include "macros.h"
 #include "parser.h"
 
-#define E_BADLABEL  "identifier ‘%.*s’ cannot be used as a label"
-#define E_EARLY     "expected %s but input ended prematurely"
-#define E_EXPECTED2 "expected %s but got %s"
-#define E_EXPECTED  "expected %s but got %s ‘%.*s’"
-#define E_INSTR     "got unknown instruction ‘%.*s’"
-#define E_TOOLARGE  "expected %s but got out-of-range integer ‘%.*s’"
-
-#define die_with_off(P, ...) die_with_off(filename, (P)-baseptr, __VA_ARGS__)
+#define E_BADLABEL "identifier cannot be used as a label"
+#define E_EARLY    "expected %s but input ended prematurely"
+#define E_EXPECTED "expected %s but got %s"
+#define E_INSTR    "got unknown instruction"
+#define E_TOOLARGE "expected %s but got out-of-range integer"
 
 enum numsize {
 	NS_NIBBLE = 0xF,
@@ -94,7 +91,7 @@ parselabel(void)
 			.name = tokens->buf[i].sv,
 		};
 		if (regtype(lbl.name) != RT_NONE)
-			die_with_off(lbl.name.p, E_BADLABEL, U8_PRI_ARGS(lbl.name));
+			DIE_AT_POS_WITH_CODE(lbl.name, lbl.name.p, E_BADLABEL);
 		dapush(&ast, lbl);
 		i += 2;
 		return true;
@@ -115,7 +112,7 @@ parseop(void)
 	}
 
 	if (!(op = oplookup(tok.sv.p, tok.sv.len)))
-		die_with_off(tok.sv.p, E_INSTR, U8_PRI_ARGS(tok.sv));
+		DIE_AT_POS_WITH_CODE(tok.sv, tok.sv.p, E_INSTR);
 	op->pfn();
 }
 
@@ -126,7 +123,7 @@ parseaddr(struct token tok)
 		return (struct raw_addr){.val = parsenum(tok, NS_ADDR)};
 	if (tok.kind == T_IDENT) {
 		if (regtype(tok.sv) != RT_NONE)
-			die_with_off(tok.sv.p, E_BADLABEL, U8_PRI_ARGS(tok.sv));
+			DIE_AT_POS_WITH_CODE(tok.sv, tok.sv.p, E_BADLABEL);
 		return (struct raw_addr){.label = true, .sv = tok.sv};
 	}
 	unreachable();
@@ -192,7 +189,7 @@ parsenum(struct token tok, enum numsize size)
 			              : size == NS_BYTE   ? "byte"
 			              : size == NS_ADDR   ? "address"
 			                                  : (unreachable(), nullptr);
-			die_with_off(tok.sv.p, E_TOOLARGE, s, U8_PRI_ARGS(tok.sv));
+			DIE_AT_POS_WITH_CODE(tok.sv, tok.sv.p, E_TOOLARGE, s);
 		}
 
 		acc *= tok.base;
@@ -207,19 +204,15 @@ reqnext(const char *want, tokkind msk)
 {
 	struct token t;
 
-	if (i >= tokens->len)
-		die_with_off(baseptr + filesize - 1, E_EARLY, want);
+	if (i >= tokens->len) {
+		DIE_AT_POS_WITH_CODE((struct u8view){}, baseptr + filesize - 1, E_EARLY,
+		                     want);
+	}
 
 	if ((t = tokens->buf[i++]).kind & msk)
 		return t;
-	if (t.kind == T_EOL) {
-		die_at_pos_with_code(filename, filebuf, (struct u8view){},
-		                     t.sv.p - baseptr, E_EXPECTED2, want,
-		                     tokrepr(t.kind));
-	}
-
-	die_at_pos_with_code(filename, filebuf, t.sv, t.sv.p - baseptr, E_EXPECTED,
-	                     want, tokrepr(t.kind), U8_PRI_ARGS(t.sv));
+	DIE_AT_POS_WITH_CODE(t.kind == T_EOL ? (struct u8view){} : t.sv, t.sv.p,
+	                     E_EXPECTED, want, tokrepr(t.kind));
 }
 
 #define I(...) ((struct dir){.kind = D_INSTR, .instr = (__VA_ARGS__)})
@@ -230,8 +223,8 @@ reqnext(const char *want, tokkind msk)
 		struct instr ins = {.kind = (T)}; \
 		struct token tok = reqnext("v-register", T_IDENT); \
 		if (regtype(tok.sv) & ~RT_VX) { \
-			die_with_off(tok.sv.p, E_EXPECTED, "v-register", \
-			             tokrepr(tok.kind), U8_PRI_ARGS(tok.sv)); \
+			DIE_AT_POS_WITH_CODE(tok.sv, tok.sv.p, E_EXPECTED, "v-register", \
+			                     tokrepr(tok.kind)); \
 		} \
 		ins.args[ins.len++].val = hexval(tok.sv.p[1]); \
 		dapush(&ast, I(ins)); \
@@ -242,12 +235,12 @@ reqnext(const char *want, tokkind msk)
 		struct token lhs = reqnext("v-register", T_IDENT); \
 		struct token rhs = reqnext("v-register", T_IDENT); \
 		if (regtype(lhs.sv) & ~RT_VX) { \
-			die_with_off(lhs.sv.p, E_EXPECTED, "v-register", \
-			             tokrepr(lhs.kind), U8_PRI_ARGS(lhs.sv)); \
+			DIE_AT_POS_WITH_CODE(lhs.sv, lhs.sv.p, E_EXPECTED, "v-register", \
+			                     tokrepr(lhs.kind)); \
 		} \
 		if (regtype(rhs.sv) & ~RT_VX) { \
-			die_with_off(rhs.sv.p, E_EXPECTED, "v-register", \
-			             tokrepr(rhs.kind), U8_PRI_ARGS(rhs.sv)); \
+			DIE_AT_POS_WITH_CODE(rhs.sv, rhs.sv.p, E_EXPECTED, "v-register", \
+			                     tokrepr(rhs.kind)); \
 		} \
 		ins.args[ins.len++].val = hexval(lhs.sv.p[1]); \
 		ins.args[ins.len++].val = hexval(rhs.sv.p[1]); \
@@ -270,8 +263,8 @@ parseop_add(void)
 			ins.kind = I_ADD_VX_B;
 			ins.args[ins.len++].val = parsenum(tok, NS_BYTE);
 		} else if (regtype(tok.sv) != RT_VX) {
-			die_with_off(tok.sv.p, E_EXPECTED, "v-register", tokrepr(tok.kind),
-			             U8_PRI_ARGS(tok.sv));
+			DIE_AT_POS_WITH_CODE(tok.sv, tok.sv.p, E_EXPECTED, "v-register",
+			                     tokrepr(tok.kind));
 		} else {
 			ins.kind = I_ADD_VX_VY;
 			ins.args[ins.len++].val = hexval(tok.sv.p[1]);
@@ -281,14 +274,14 @@ parseop_add(void)
 		ins.kind = I_ADD_I_VX;
 		tok = reqnext("v-register", T_IDENT);
 		if (regtype(tok.sv) != RT_VX) {
-			die_with_off(tok.sv.p, E_EXPECTED, "v-register", tokrepr(tok.kind),
-			             U8_PRI_ARGS(tok.sv));
+			DIE_AT_POS_WITH_CODE(tok.sv, tok.sv.p, E_EXPECTED, "v-register",
+			                     tokrepr(tok.kind));
 		}
 		ins.args[ins.len++].val = hexval(tok.sv.p[1]);
 		break;
 	default:
-		die_with_off(tok.sv.p, E_EXPECTED, "v- or i-register",
-		             tokrepr(tok.kind), U8_PRI_ARGS(tok.sv));
+		DIE_AT_POS_WITH_CODE(tok.sv, tok.sv.p, E_EXPECTED, "v- or i-register",
+		                     tokrepr(tok.kind));
 	}
 
 	dapush(&ast, I(ins));
@@ -354,12 +347,12 @@ parseop_drw(void)
 	op3 = reqnext("nibble", T_NUMBER);
 
 	if (regtype(op1.sv) != RT_VX) {
-		die_with_off(op1.sv.p, E_EXPECTED, "v-register", tokrepr(op1.kind),
-		             U8_PRI_ARGS(op1.sv));
+		DIE_AT_POS_WITH_CODE(op1.sv, op1.sv.p, E_EXPECTED, "v-register",
+		                     tokrepr(op1.kind));
 	}
 	if (regtype(op2.sv) != RT_VX) {
-		die_with_off(op2.sv.p, E_EXPECTED, "v-register", tokrepr(op2.kind),
-		             U8_PRI_ARGS(op2.sv));
+		DIE_AT_POS_WITH_CODE(op2.sv, op2.sv.p, E_EXPECTED, "v-register",
+		                     tokrepr(op2.kind));
 	}
 
 	ins.args[ins.len++].val = hexval(op1.sv.p[1]);
@@ -389,8 +382,8 @@ parseop_jp(void)
 	} else if (op.kind == T_IDENT) {
 		ins.kind = I_JP_V0_A;
 		if (op.sv.len != 2 || !memeq(op.sv.p, "v0", 2)) {
-			die_with_off(op.sv.p, E_EXPECTED, "v0-register or address",
-			             tokrepr(op.kind), U8_PRI_ARGS(op.sv));
+			DIE_AT_POS_WITH_CODE(op.sv, op.sv.p, E_EXPECTED,
+			                     "v0-register or address", tokrepr(op.kind));
 		}
 		ins.args[ins.len++] = parseaddr(reqnext("address", T_NUMBER | T_IDENT));
 	} else
@@ -412,8 +405,8 @@ parseop_ld(void)
 		ins.kind = rt == RT_DT ? I_LD_DT : I_LD_ST;
 		op = reqnext("v-register", T_IDENT);
 		if (regtype(op.sv) != RT_VX) {
-			die_with_off(op.sv.p, E_EXPECTED, "v-register", tokrepr(op.kind),
-			             U8_PRI_ARGS(op.sv));
+			DIE_AT_POS_WITH_CODE(op.sv, op.sv.p, E_EXPECTED, "v-register",
+			                     tokrepr(op.kind));
 		}
 		ins.args[ins.len++].val = hexval(op.sv.p[1]);
 		break;
@@ -441,9 +434,9 @@ parseop_ld(void)
 				ins.args[ins.len++].val = hexval(op.sv.p[1]);
 				break;
 			default:
-				die_with_off(op.sv.p, E_EXPECTED,
-				             "v-, k-, or dt-register, or byte",
-				             tokrepr(op.kind), U8_PRI_ARGS(op.sv));
+				DIE_AT_POS_WITH_CODE(op.sv, op.sv.p, E_EXPECTED,
+				                     "v-, k-, or dt-register, or byte",
+				                     tokrepr(op.kind));
 			}
 
 			break;
@@ -457,8 +450,8 @@ parseop_ld(void)
 		break;
 
 	default:
-		die_with_off(op.sv.p, E_EXPECTED, "v-, i-, dt-, or st-register",
-		             tokrepr(op.kind), U8_PRI_ARGS(op.sv));
+		DIE_AT_POS_WITH_CODE(op.sv, op.sv.p, E_EXPECTED,
+		                     "v-, i-, dt-, or st-register", tokrepr(op.kind));
 	}
 
 	dapush(&ast, I(ins));
@@ -486,8 +479,8 @@ parseop_rnd(void)
 	op2 = reqnext("byte", T_NUMBER);
 
 	if (regtype(op1.sv) != RT_VX) {
-		die_with_off(op1.sv.p, E_EXPECTED, "v-register", tokrepr(op1.kind),
-		             U8_PRI_ARGS(op1.sv));
+		DIE_AT_POS_WITH_CODE(op1.sv, op1.sv.p, E_EXPECTED, "v-register",
+		                     tokrepr(op1.kind));
 	}
 
 	ins.args[ins.len++].val = hexval(op1.sv.p[1]);
@@ -511,16 +504,16 @@ parseop_se(void)
 	op2 = reqnext("byte or v-register", T_IDENT | T_NUMBER);
 
 	if (regtype(op1.sv) != RT_VX) {
-		die_with_off(op1.sv.p, E_EXPECTED, "v-register", tokrepr(op1.kind),
-		             U8_PRI_ARGS(op1.sv));
+		DIE_AT_POS_WITH_CODE(op1.sv, op1.sv.p, E_EXPECTED, "v-register",
+		                     tokrepr(op1.kind));
 	}
 	ins.args[ins.len++].val = hexval(op1.sv.p[1]);
 
 	switch (op2.kind) {
 	case T_IDENT:
 		if (regtype(op2.sv) != RT_VX) {
-			die_with_off(op2.sv.p, E_EXPECTED, "v-register", tokrepr(op2.kind),
-			             U8_PRI_ARGS(op2.sv));
+			DIE_AT_POS_WITH_CODE(op2.sv, op2.sv.p, E_EXPECTED, "v-register",
+			                     tokrepr(op2.kind));
 		}
 		ins.kind = I_SE_VX_VY;
 		ins.args[ins.len++].val = hexval(op2.sv.p[1]);
@@ -570,16 +563,16 @@ parseop_sne(void)
 	op2 = reqnext("byte or v-register", T_IDENT | T_NUMBER);
 
 	if (regtype(op1.sv) != RT_VX) {
-		die_with_off(op1.sv.p, E_EXPECTED, "v-register", tokrepr(op1.kind),
-		             U8_PRI_ARGS(op1.sv));
+		DIE_AT_POS_WITH_CODE(op1.sv, op1.sv.p, E_EXPECTED, "v-register",
+		                     tokrepr(op1.kind));
 	}
 	ins.args[ins.len++].val = hexval(op1.sv.p[1]);
 
 	switch (op2.kind) {
 	case T_IDENT:
 		if (regtype(op2.sv) != RT_VX) {
-			die_with_off(op2.sv.p, E_EXPECTED, "v-register", tokrepr(op2.kind),
-			             U8_PRI_ARGS(op2.sv));
+			DIE_AT_POS_WITH_CODE(op2.sv, op2.sv.p, E_EXPECTED, "v-register",
+			                     tokrepr(op2.kind));
 		}
 		ins.kind = I_SNE_VX_VY;
 		ins.args[ins.len++].val = hexval(op2.sv.p[1]);
