@@ -258,7 +258,7 @@ build_c8dump(void)
 	glob_t g;
 
 	build_librune();
-	if (glob("src/c8asm/*.c", 0, globerr, &g))
+	if (glob("src/c8dump/*.c", 0, globerr, &g))
 		die("glob");
 	for (size_t i = 0; i < g.gl_pathc; i++)
 		mkc(g.gl_pathv[i], (struct strv){});
