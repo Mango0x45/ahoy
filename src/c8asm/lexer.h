@@ -23,6 +23,6 @@ struct tokens {
 };
 
 const char *tokrepr(tokkind);
-struct tokens lexfile(struct u8view);
+struct tokens lexfile();
 
 #endif /* !AHOY_C8ASM_LEXER_H */

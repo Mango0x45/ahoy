@@ -21,6 +21,7 @@ static void asmfile(int, const char *);
 size_t filesize;
 const char *filename;
 const char8_t *baseptr;
+struct u8view filebuf;
 
 int
 main(int argc, char **argv)
@@ -100,8 +101,9 @@ asmfile(int fd, const char *fn)
 
 	free(buf);
 	filesize = sb.len;
+	filebuf = u8strtou8(sb);
 	baseptr = u8strfit(&sb)->p;
-	assemble(stdout, ast = parsefile(toks = lexfile(u8strtou8(sb))));
+	assemble(stdout, ast = parsefile(toks = lexfile()));
 
 	da_foreach (&ast, node) {
 		if (node->kind == D_INSTR && node->instr.kind == I_DB)

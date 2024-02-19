@@ -122,6 +122,8 @@ build_common(void)
 	cmd_t c = {0};
 	struct strv sv = {0};
 
+	build_librune();
+
 	if (glob("src/common/*.c", 0, globerr, &g))
 		die("glob");
 
@@ -146,6 +148,7 @@ build_common(void)
 
 		c.dst = objs[i];
 		cmdaddv(&c, sv.buf, sv.len);
+		cmdadd(&c, "-Ivendor/librune/include");
 		cmdadd(&c, "-c", g.gl_pathv[i], "-o", objs[i]);
 		CMDPRC2(c);
 	}

@@ -10,12 +10,15 @@
 #define ISDIGIT(n)   ((n) >= '0' && (n) <= '9')
 #define U8MOV(sv, n) ((sv)->p += (n), (sv)->len -= (n))
 
-#define E_BASE         "integer with invalid base specifier ‘%.*s’"
-#define E_EXTRA        "unknown extraneous character ‘%.*s’"
-#define E_IDENTCHAR    "illegal character in identifier ‘%.*s’"
+#define die_at_pos_with_code(HL, OFF, ...) \
+	die_at_pos_with_code(filename, filebuf, (HL), (OFF), __VA_ARGS__)
+
+#define E_BASE         "integer with invalid base specifier"
+#define E_EXTRA        "unknown extraneous character"
+#define E_IDENTCCHAR   "illegal character in identifier"
 #define E_IDENTLOST    "local label missing identifier"
-#define E_IDENTSCHAR   "illegal first character in identifier ‘%.*s’"
-#define E_UNTERMINATED "unterminated string literal ‘%.*s%.*s’"
+#define E_IDENTSCHAR   "illegal first character in identifier"
+#define E_UNTERMINATED "unterminated string literal"
 #define E_UTF8         "invalid UTF-8 byte near ‘%02X’"
 
 #define EOLS     U"\n\v\f\r\x85\u2028\u2029"
@@ -35,10 +38,11 @@ tokrepr(tokkind k)
 }
 
 struct tokens
-lexfile(struct u8view sv)
+lexfile(void)
 {
 	const char8_t *s;
 	struct tokens toks;
+	struct u8view sv = filebuf;
 
 	if (s = u8chk(sv.p, sv.len))
 		die_with_off(filename, s - sv.p, E_UTF8, *s);
@@ -67,8 +71,8 @@ lexfile(struct u8view sv)
 void
 lexline(struct tokens *toks, struct u8view *sv)
 {
-#define die_with_off(...) \
-	die_with_off(filename, sv->p - baseptr - w, __VA_ARGS__);
+#define _die_at_pos_with_code(HL, ...) \
+	die_at_pos_with_code((HL), sv->p - baseptr - w, __VA_ARGS__)
 
 	struct token tok;
 
@@ -113,7 +117,7 @@ lexline(struct tokens *toks, struct u8view *sv)
 					break;
 				default:
 					if (!ISDIGIT(ch))
-						die_with_off(E_BASE, w, sv->p - w);
+						_die_at_pos_with_code(tok.sv, E_BASE);
 				}
 			}
 
@@ -124,14 +128,12 @@ out:
 		} else if (ch == '.' || ch == '_' || rprop_is_xids(ch)) {
 			tok.kind = T_IDENT;
 			if (ch == '.') {
-				if (!sv->len)
-					die_with_off(E_IDENTLOST);
-
 				tok.sv.len += w = u8next(&ch, &sv->p, &sv->len);
-				if (rprop_is_pat_ws(ch))
-					die_with_off(E_IDENTLOST);
+				if (!w || rprop_is_pat_ws(ch))
+					_die_at_pos_with_code(tok.sv, E_IDENTLOST);
 				if (ch != '_' && !rprop_is_xids(ch)) {
-					die_with_off(E_IDENTSCHAR, w, sv->p - w);
+					U8MOV(&tok.sv, 1);
+					_die_at_pos_with_code(tok.sv, E_IDENTSCHAR);
 				}
 			}
 
@@ -140,8 +142,13 @@ out:
 					U8MOV(sv, -w);
 					break;
 				}
-				if (!rprop_is_xidc(ch))
-					die_with_off(E_IDENTCHAR, w, sv->p - w);
+				if (!rprop_is_xidc(ch)) {
+					struct u8view hl = {
+						.p = sv->p - w,
+						.len = w,
+					};
+					_die_at_pos_with_code(hl, E_IDENTCCHAR);
+				}
 
 				tok.sv.len += w;
 			}
@@ -152,22 +159,24 @@ out:
 				if (ch == '"')
 					goto found;
 			}
-			die_with_off(E_UNTERMINATED, (int)MIN(tok.sv.len, 20), tok.sv.p,
-			             tok.sv.len > 20 ? (int)lengthof(u8"…") - 1 : 0, u8"…");
+			_die_at_pos_with_code(tok.sv, E_UNTERMINATED);
 found:
 		} else if (ch == ':') {
 			tok.kind = T_COLON;
 		} else if (ch == ';') {
 			goto end;
 		} else {
-			die_with_off(E_EXTRA, w, sv->p - w);
+			struct u8view hl = {.p = sv->p - w, .len = w};
+			_die_at_pos_with_code(hl, E_EXTRA);
 		}
 
 		/* The colon is the only token that isn’t whitespace separated */
 		if (ch != ':' && sv->len) {
 			w = u8next(&ch, &sv->p, &sv->len);
-			if (!w || !rprop_is_pat_ws(ch))
-				die_with_off(E_EXTRA, w, sv->p - w);
+			if (!w || !rprop_is_pat_ws(ch)) {
+				struct u8view hl = {.p = sv->p - w, .len = w};
+				_die_at_pos_with_code(hl, E_EXTRA);
+			}
 		}
 
 		dapush(toks, tok);
@@ -181,7 +190,7 @@ end:;
 	};
 	dapush(toks, tok);
 
-#undef die_with_off
+#undef _die_at_pos_with_code
 }
 
 bool

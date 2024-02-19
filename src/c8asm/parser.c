@@ -206,14 +206,20 @@ struct token
 reqnext(const char *want, tokkind msk)
 {
 	struct token t;
+
 	if (i >= tokens->len)
 		die_with_off(baseptr + filesize - 1, E_EARLY, want);
 
 	if ((t = tokens->buf[i++]).kind & msk)
 		return t;
-	if (t.kind == T_EOL)
-		die_with_off(t.sv.p, E_EXPECTED2, want, tokrepr(t.kind));
-	die_with_off(t.sv.p, E_EXPECTED, want, tokrepr(t.kind), U8_PRI_ARGS(t.sv));
+	if (t.kind == T_EOL) {
+		die_at_pos_with_code(filename, filebuf, (struct u8view){},
+		                     t.sv.p - baseptr, E_EXPECTED2, want,
+		                     tokrepr(t.kind));
+	}
+
+	die_at_pos_with_code(filename, filebuf, t.sv, t.sv.p - baseptr, E_EXPECTED,
+	                     want, tokrepr(t.kind), U8_PRI_ARGS(t.sv));
 }
 
 #define I(...) ((struct dir){.kind = D_INSTR, .instr = (__VA_ARGS__)})
