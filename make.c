@@ -1,4 +1,5 @@
 #define _GNU_SOURCE
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -50,11 +51,18 @@
 #define CMDPRC(c)  _CMDPRC(c, cmdput)
 #define CMDPRC2(c) _CMDPRC(c, cmdput2)
 
+enum libs {
+	L_CERR = 1 << 0,
+	L_LIBRUNE = 1 << 1,
+};
+
 static void build_ahoy(void);
 static void build_c8asm(void);
 static void build_c8dump(void);
 static void build_common(void);
 static void build_librune(void);
+static void mkb(char *, char **, size_t, struct strv, enum libs);
+static void mkc(char *, struct strv);
 static int globerr(const char *, int);
 static void cmdput2(cmd_t);
 
@@ -116,134 +124,119 @@ main(int argc, char **argv)
 }
 
 void
-build_common(void)
+mkb(char *dst, char **srcs, size_t srcslen, struct strv extras, enum libs libs)
 {
-	glob_t g;
-	char **objs;
-	cmd_t c = {0};
-	struct strv sv = {0};
+	static cmd_t c;
+	static struct strv sv;
 
-	build_librune();
-
-	if (glob("src/common/*.c", 0, globerr, &g))
-		die("glob");
-
-	objs = bufalloc(nullptr, g.gl_pathc, sizeof(*objs));
-	for (size_t i = 0; i < g.gl_pathc; i++) {
-		char *s = strdup(g.gl_pathv[i]);
-		if (!s)
-			die("strdup");
-		s[strlen(s) - 1] = 'o';
-		objs[i] = s;
+	for (size_t i = 0; i < srcslen; i++) {
+		size_t n = strlen(srcs[i]);
+		assert(srcs[i][n - 1] == 'c');
+		srcs[i][n - 1] = 'o';
 	}
 
-	env_or_default(&sv, "CC", CC);
-	if (FLAGSET('r'))
-		env_or_default(&sv, "CFLAGS", CFLAGS_RLS);
-	else
-		env_or_default(&sv, "CFLAGS", CFLAGS_DBG);
+	if (!sv.buf) {
+		env_or_default(&sv, "CC", CC);
+		env_or_default(&sv, "LDFLAGS", nullptr);
+		if (FLAGSET('r'))
+			env_or_default(&sv, "CFLAGS", CFLAGS);
+	}
 
-	for (size_t i = 0; i < g.gl_pathc; i++) {
-		if (!FLAGSET('f') && !foutdated(objs[i], g.gl_pathv[i]))
-			continue;
-
-		c.dst = objs[i];
+	if (foutdatedv(dst, (const char **)srcs, srcslen) || FLAGSET('f')) {
+		c.dst = dst;
 		cmdaddv(&c, sv.buf, sv.len);
-		cmdadd(&c, "-Ivendor/librune/include");
-		cmdadd(&c, "-c", g.gl_pathv[i], "-o", objs[i]);
+		cmdaddv(&c, extras.buf, extras.len);
+		cmdadd(&c, "-Isrc/common", "-Ivendor/da", "-Ivendor/librune/include");
+		cmdadd(&c, "-o", dst);
+		cmdaddv(&c, srcs, srcslen);
+		if (libs & L_CERR)
+			cmdadd(&c, "src/common/cerr.o");
+		if (libs & L_LIBRUNE)
+			cmdadd(&c, "vendor/librune/librune.a");
+		CMDPRC2(c);
+	}
+}
+
+void
+mkc(char *src, struct strv extras)
+{
+	size_t len;
+	char *dst;
+	static cmd_t c;
+	static struct strv sv;
+
+	len = strlen(src);
+	if (!(dst = strdup(src)))
+		die("strdup");
+	assert(dst[len - 1] == 'c');
+	dst[len - 1] = 'o';
+
+	if (!sv.buf) {
+		env_or_default(&sv, "CC", CC);
+		if (FLAGSET('r'))
+			env_or_default(&sv, "CFLAGS", CFLAGS_RLS);
+		else
+			env_or_default(&sv, "CFLAGS", CFLAGS_DBG);
+	}
+
+	if (foutdated(dst, src) || FLAGSET('f')) {
+		c.dst = dst;
+		cmdaddv(&c, sv.buf, sv.len);
+		cmdaddv(&c, extras.buf, extras.len);
+		cmdadd(&c, "-Isrc/common", "-Ivendor/da", "-Ivendor/librune/include");
+		cmdadd(&c, "-c", src, "-o", dst);
 		CMDPRC2(c);
 	}
 
-	globfree(&g);
-	strvfree(&sv);
+	free(dst);
+}
+
+void
+build_common(void)
+{
+	glob_t g;
+
+	build_librune();
+	if (glob("src/common/*.c", 0, globerr, &g))
+		die("glob");
 	for (size_t i = 0; i < g.gl_pathc; i++)
-		free(objs[i]);
+		mkc(g.gl_pathv[i], (struct strv){});
+	globfree(&g);
 }
 
 void
 build_ahoy(void)
 {
 	glob_t g;
-	char **objs;
-	cmd_t c = {0};
-	struct strv sv = {0}, pc = {0};
+	struct strv sv = {}, pc = {};
 
 	build_librune();
-
 	if (glob("src/ahoy/*.c", 0, globerr, &g))
 		die("glob");
-
-	objs = bufalloc(nullptr, g.gl_pathc, sizeof(*objs));
-	for (size_t i = 0; i < g.gl_pathc; i++) {
-		char *s = strdup(g.gl_pathv[i]);
-		if (!s)
-			die("strdup");
-		s[strlen(s) - 1] = 'o';
-		objs[i] = s;
-	}
-
-	env_or_default(&sv, "CC", CC);
-	if (FLAGSET('r'))
-		env_or_default(&sv, "CFLAGS", CFLAGS_RLS);
-	else
-		env_or_default(&sv, "CFLAGS", CFLAGS_DBG);
-
 	(void)pcquery(&pc, "sdl2", PKGC_CFLAGS);
-
-	for (size_t i = 0; i < g.gl_pathc; i++) {
-		if (!FLAGSET('f') && !foutdated(objs[i], g.gl_pathv[i]))
-			continue;
-
-		c.dst = objs[i];
-		cmdaddv(&c, sv.buf, sv.len);
-		cmdadd(&c, "-Isrc/common", "-Ivendor/da", "-Ivendor/librune/include");
-		cmdaddv(&c, pc.buf, pc.len);
-		cmdadd(&c, "-c", g.gl_pathv[i], "-o", objs[i]);
-		CMDPRC2(c);
-	}
-
-	if (!FLAGSET('f') && !foutdatedv("ahoy", (const char **)objs, g.gl_pathc))
-		goto out;
-
-	strvfree(&sv);
-	strvfree(&pc);
-	env_or_default(&sv, "CC", CC);
-	env_or_default(&sv, "LDFLAGS", nullptr);
-
-	c.dst = "ahoy";
-	cmdaddv(&c, sv.buf, sv.len);
-	if (pcquery(&pc, "sdl2", PKGC_LIBS))
-		cmdaddv(&c, pc.buf, pc.len);
-	else
-		cmdadd(&c, "-lSDL2");
-	cmdadd(&c, "-o", c.dst);
-	cmdaddv(&c, objs, g.gl_pathc);
-	cmdadd(&c, "src/common/cerr.o", "vendor/librune/librune.a");
-	CMDPRC2(c);
-
-out:
-	globfree(&g);
-	strvfree(&sv);
-	strvfree(&pc);
 	for (size_t i = 0; i < g.gl_pathc; i++)
-		free(objs[i]);
+		mkc(g.gl_pathv[i], pc);
+	strvfree(&pc);
+	if (!pcquery(&pc, "sdl2", PKGC_LIBS))
+		pc = (struct strv){.buf = (char *[]){"-SDL2"}, .len = 1};
+	mkb("ahoy", g.gl_pathv, g.gl_pathc, pc, L_CERR | L_LIBRUNE);
+
+	globfree(&g);
+	strvfree(&pc);
 }
 
 void
 build_c8asm(void)
 {
 	glob_t g;
-	char **objs;
 	cmd_t c = {0};
-	struct strv sv = {0};
 
 	if (!binexists("gperf"))
 		diex("gperf is required to build c8asm");
-
 	build_librune();
 
-	if (FLAGSET('f')
-	    || foutdated("src/c8asm/autogen-lookup.h", "src/c8asm/instr.gperf"))
+	if (foutdated("src/c8asm/autogen-lookup.h", "src/c8asm/instr.gperf")
+	    || FLAGSET('f'))
 	{
 		c.dst = "src/c8asm/autogen-lookup.h";
 		cmdadd(&c, "gperf", "src/c8asm/instr.gperf", "--output-file", c.dst);
@@ -252,112 +245,25 @@ build_c8asm(void)
 
 	if (glob("src/c8asm/*.c", 0, globerr, &g))
 		die("glob");
-
-	objs = bufalloc(nullptr, g.gl_pathc, sizeof(*objs));
-	for (size_t i = 0; i < g.gl_pathc; i++) {
-		char *s = strdup(g.gl_pathv[i]);
-		if (!s)
-			die("strdup");
-		s[strlen(s) - 1] = 'o';
-		objs[i] = s;
-	}
-
-	env_or_default(&sv, "CC", CC);
-	if (FLAGSET('r'))
-		env_or_default(&sv, "CFLAGS", CFLAGS_RLS);
-	else
-		env_or_default(&sv, "CFLAGS", CFLAGS_DBG);
-
-	for (size_t i = 0; i < g.gl_pathc; i++) {
-		if (!FLAGSET('f') && !foutdated(objs[i], g.gl_pathv[i]))
-			continue;
-
-		c.dst = objs[i];
-		cmdaddv(&c, sv.buf, sv.len);
-		cmdadd(&c, "-Isrc/common", "-Ivendor/da", "-Ivendor/librune/include");
-		cmdadd(&c, "-c", g.gl_pathv[i], "-o", objs[i]);
-		CMDPRC2(c);
-	}
-
-	if (!FLAGSET('f') && !foutdatedv("c8asm", (const char **)objs, g.gl_pathc))
-		goto out;
-
-	strvfree(&sv);
-	env_or_default(&sv, "CC", CC);
-	env_or_default(&sv, "LDFLAGS", nullptr);
-
-	c.dst = "c8asm";
-	cmdaddv(&c, sv.buf, sv.len);
-	cmdadd(&c, "-o", c.dst);
-	cmdaddv(&c, objs, g.gl_pathc);
-	cmdadd(&c, "src/common/cerr.o", "vendor/librune/librune.a");
-	CMDPRC2(c);
-
-out:
-	globfree(&g);
-	strvfree(&sv);
 	for (size_t i = 0; i < g.gl_pathc; i++)
-		free(objs[i]);
+		mkc(g.gl_pathv[i], (struct strv){});
+	mkb("c8asm", g.gl_pathv, g.gl_pathc, (struct strv){}, L_CERR | L_LIBRUNE);
+
+	globfree(&g);
 }
 
 void
 build_c8dump(void)
 {
 	glob_t g;
-	char **objs;
-	cmd_t c = {0};
-	struct strv sv = {0};
 
 	build_librune();
-
-	if (glob("src/c8dump/*.c", 0, globerr, &g))
+	if (glob("src/c8asm/*.c", 0, globerr, &g))
 		die("glob");
-
-	objs = bufalloc(nullptr, g.gl_pathc, sizeof(*objs));
-	for (size_t i = 0; i < g.gl_pathc; i++) {
-		char *s = strdup(g.gl_pathv[i]);
-		if (!s)
-			die("strdup");
-		s[strlen(s) - 1] = 'o';
-		objs[i] = s;
-	}
-
-	env_or_default(&sv, "CC", CC);
-	if (FLAGSET('r'))
-		env_or_default(&sv, "CFLAGS", CFLAGS_RLS);
-	else
-		env_or_default(&sv, "CFLAGS", CFLAGS_DBG);
-
-	for (size_t i = 0; i < g.gl_pathc; i++) {
-		if (!FLAGSET('f') && !foutdated(objs[i], g.gl_pathv[i]))
-			continue;
-
-		c.dst = objs[i];
-		cmdaddv(&c, sv.buf, sv.len);
-		cmdadd(&c, "-Isrc/common", "-Ivendor/da", "-Ivendor/librune/include");
-		cmdadd(&c, "-c", g.gl_pathv[i], "-o", objs[i]);
-		CMDPRC2(c);
-	}
-
-	if (!FLAGSET('f') && !foutdatedv("c8dump", (const char **)objs, g.gl_pathc))
-		goto out;
-
-	strvfree(&sv);
-	env_or_default(&sv, "CC", CC);
-	env_or_default(&sv, "LDFLAGS", nullptr);
-
-	c.dst = "c8dump";
-	cmdaddv(&c, sv.buf, sv.len);
-	cmdadd(&c, "-o", c.dst);
-	cmdaddv(&c, objs, g.gl_pathc);
-	cmdadd(&c, "src/common/cerr.o", "vendor/librune/librune.a");
-	CMDPRC2(c);
-
-out:
-	globfree(&g);
-	strvfree(&sv);
 	for (size_t i = 0; i < g.gl_pathc; i++)
-		free(objs[i]);
+		mkc(g.gl_pathv[i], (struct strv){});
+	mkb("c8dump", g.gl_pathv, g.gl_pathc, (struct strv){}, L_CERR | L_LIBRUNE);
+	globfree(&g);
 }
 
 void
