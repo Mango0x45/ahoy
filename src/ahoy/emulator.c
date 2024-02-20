@@ -314,9 +314,6 @@ opexec(uint16_t op)
 
 		break;
 	}
-
-	default:
-		unreachable();
 	}
 }
 

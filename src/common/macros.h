@@ -9,19 +9,14 @@
 #define streq(x, y)    (!strcmp(x, y))
 #define u8eq(x, y)     (!u8cmp(x, y))
 
-#if DEBUG || !defined(unreachable)
-#	if DEBUG
-#		include "cerr.h"
-#		ifdef unreachable
-#			undef unreachable
-#		endif
-#		define unreachable() \
-			diex("%s:%d: hit unreachable in %s()", __FILE__, __LINE__, __func__)
-#	elifdef __clang__
-#		define unreachable() __builtin_unreachable()
-#	else
-#		include <stddef.h>
-#	endif
+#if DEBUG
+#	include "cerr.h"
+#	define assume(C) \
+		((C) ? (void)0 \
+		     : diex("%s:%d: %s(): assumption ‘%s’ failed", __FILE__, __LINE__, \
+		            __func__, #C))
+#else
+#	define assume(C) ((C) ? (void)0 : unreachable())
 #endif
 
 #endif /* !AHOY_COMMON_MACROS_H */

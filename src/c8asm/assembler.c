@@ -77,23 +77,21 @@ assemble(FILE *stream, struct ast ast)
 	bool pad = false;
 
 	da_foreach (&ast, node) {
+		assume(node->kind == D_LABEL || node->kind == D_INSTR);
 		if (node->kind == D_LABEL) {
 			struct label lbl = {
 				.addr = i,
 				.sv = node->name,
 			};
 			pushlabel(node->name.p[0] == '.' ? &locals : &globals, lbl);
-		} else if (node->kind == D_INSTR)
+		} else
 			i += node->instr.kind == I_DB ? node->instr.len : 2;
-		else
-			unreachable();
 	}
 
 	da_foreach (&ast, node) {
 		if (node->kind == D_LABEL)
 			continue;
-		if (node->kind != D_INSTR)
-			unreachable();
+		assume(node->kind == D_INSTR);
 
 		/* Instructions need to be 0-padded so they appear on an even byte
 		   boundary. */
@@ -229,8 +227,6 @@ assemble(FILE *stream, struct ast ast)
 			PUT(0x8003 | (node->instr.args[0].val << 8)
 			    | node->instr.args[1].val << 4);
 			break;
-		default:
-			unreachable();
 		}
 	}
 

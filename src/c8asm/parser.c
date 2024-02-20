@@ -119,14 +119,12 @@ parseop(void)
 struct raw_addr
 parseaddr(struct token tok)
 {
+	assume(tok.kind & (T_NUMBER | T_IDENT));
 	if (tok.kind == T_NUMBER)
 		return (struct raw_addr){.val = parsenum(tok, NS_ADDR)};
-	if (tok.kind == T_IDENT) {
-		if (regtype(tok.sv) != RT_NONE)
-			DIE_AT_POS_WITH_CODE(tok.sv, tok.sv.p, E_BADLABEL);
-		return (struct raw_addr){.label = true, .sv = tok.sv};
-	}
-	unreachable();
+	if (regtype(tok.sv) != RT_NONE)
+		DIE_AT_POS_WITH_CODE(tok.sv, tok.sv.p, E_BADLABEL);
+	return (struct raw_addr){.label = true, .sv = tok.sv};
 }
 
 enum regtype
@@ -150,6 +148,7 @@ regtype(struct u8view v)
 uint16_t
 hexval(char ch)
 {
+	assume((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f'));
 	return ch >= '0' && ch <= '9' ? ch - '0'
 	     : ch >= 'a' && ch <= 'f' ? ch - 'a' + 10
 	                              : (unreachable(), 0);
@@ -173,6 +172,9 @@ parsenum(struct token tok, enum numsize size)
 	}
 
 	for (ch = *v.p; v.len; v.p++, v.len--, ch = *v.p) {
+		assume((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f')
+		       || (ch >= 'A' && ch <= 'F') || ch == '\'');
+
 		if (ch == '\'')
 			continue;
 		else if (ch >= '0' && ch <= '9')
@@ -181,8 +183,6 @@ parsenum(struct token tok, enum numsize size)
 			ch -= 'a' - 10;
 		else if (ch >= 'A' && ch <= 'F')
 			ch -= 'A' - 10;
-		else
-			unreachable();
 
 		if (acc > cutoff || (acc == cutoff && ch > cutlim)) {
 			const char *s = size == NS_NIBBLE ? "nibble"
@@ -386,8 +386,7 @@ parseop_jp(void)
 			                     "v0-register or address", tokrepr(op.kind));
 		}
 		ins.args[ins.len++] = parseaddr(reqnext("address", T_NUMBER | T_IDENT));
-	} else
-		unreachable();
+	}
 
 	dapush(&ast, I(ins));
 }
