@@ -230,6 +230,9 @@ assemble(FILE *stream, struct ast ast)
 		}
 	}
 
+	if (pad)
+		putchar(0);
+
 	locals.len = 0;
 
 #undef PUT
