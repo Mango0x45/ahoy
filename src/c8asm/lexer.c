@@ -179,7 +179,7 @@ found:
 		dapush(toks, tok);
 	}
 
-end:;
+end:
 	tok = (struct token){
 		.kind = T_EOL,
 		.sv.p = sv->p,
