@@ -34,6 +34,7 @@
 #else
 #	define CFLAGS_RLS CFLAGS, "-O3", "-flto", "-march=native", "-mtune=native"
 #endif
+#define PREFIX "/usr/local"
 
 #define streq(x, y) (!strcmp(x, y))
 
@@ -63,6 +64,7 @@ static void build_common(void);
 static void build_librune(void);
 static void mkb(char *, char **, size_t, struct strv, enum libs);
 static void mkc(char *, struct strv);
+static char *mkoutpath(const char *, const char *);
 static int globerr(const char *, int);
 static void cmdput2(cmd_t);
 
@@ -109,12 +111,39 @@ main(int argc, char **argv)
 		build_c8asm();
 		build_ahoy();
 	} else if (streq(*argv, "clean")) {
-		cmd_t c = {0};
+		cmd_t c = {};
 		cmdadd(&c, "find", ".", "-type", "f", "(", "-name", "*.[ao]", "-or",
 		       "-name", "ahoy", "-or", "-name", "c8asm", "-or", "-name",
 		       "c8dump", "-or", "-path", "./src/c8asm/autogen-lookup.h", ")",
 		       "-delete");
 		CMDPRC(c);
+	} else if (streq(*argv, "install")) {
+		cmd_t c = {};
+		char *bin, *man;
+		char *progs[] = {"ahoy", "c8asm", "c8dump"};
+		char *mans[] = {"ahoy.1", "c8asm.1", "c8dump.1", "c8asm.5"};
+
+		if (!binexists("install"))
+			diex("‘install’ program is missing");
+
+		for (size_t i = 0; i < lengthof(progs); i++) {
+			char *path = mkoutpath("/bin", progs[i]);
+			c.dst = progs[i];
+			cmdadd(&c, "install", "-Dsm755", progs[i], path);
+			CMDPRC2(c);
+		}
+
+		for (size_t i = 0; i < lengthof(mans); i++) {
+			char src[128];
+			char *path =
+				mkoutpath(streq(mans[i], "c8asm.5") ? "/share/man/man5"
+			                                        : "/share/man/man1",
+			              mans[i]);
+			c.dst = mans[i];
+			snprintf(src, sizeof(src), "man/%s", mans[i]);
+			cmdadd(&c, "install", "-Dm644", src, path);
+			CMDPRC2(c);
+		}
 	} else {
 		warnx("invalid subcommand -- '%s'", *argv);
 		usage();
@@ -297,6 +326,26 @@ build_librune(void)
 			cmdadd(&c, "-l");
 		CMDPRC(c);
 	}
+}
+
+char *
+mkoutpath(const char *s, const char *base)
+{
+	const char *destdir, *prefix;
+	static char buf[PATH_MAX];
+
+	if (!(destdir = getenv("DESTDIR")))
+		destdir = "";
+	if (!(prefix = getenv("PREFIX")))
+		prefix = PREFIX;
+
+	if (snprintf(buf, sizeof(buf), "%s%s%s/%s", destdir, prefix, s, base)
+	    >= sizeof(buf))
+	{
+		errno = ENAMETOOLONG;
+		die(__func__);
+	}
+	return buf;
 }
 
 int
