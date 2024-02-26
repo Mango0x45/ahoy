@@ -175,7 +175,7 @@ opexec(uint16_t op)
 			c8.V[x] = c8.V[y] - c8.V[x];
 			break;
 		case 0xE:
-			c8.V[0xF] = c8.V[x] & 0x80;
+			c8.V[0xF] = (bool)(c8.V[x] & 0x80);
 			c8.V[x] <<= 1;
 			break;
 		default:
