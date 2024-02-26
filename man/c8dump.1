@@ -1,0 +1,58 @@
+.Dd 26 February, 2024
+.Dt U8DUMP 1
+.Os Ahoy 1.0.0
+.Sh NAME
+.Nm c8dump
+.Nd disassemble CHIP-8 binaries
+.Sh SYNOPSIS
+.Nm
+.Op Ar
+.Nm
+.Fl h
+.Sh DESCRIPTION
+The
+.Nm
+utility disassembles CHIP-8 binaries into the assembly dialect understood
+by the
+.Xr c8asm 1
+assembler.
+It reads the binaries provided as command-line arguments and writes the
+corresponding assembly code to the standard output.
+If no command-line arguments are provided or the special
+.Sq \-
+filename is given,
+input is read from the standard input.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl h , Fl Fl help
+Display help information by opening this manual page.
+.El
+.Pp
+As a result of the CHIP-8 binary format it is quite common that sprite
+data and other sequences of byte-literals will be translated by
+.Nm
+into instructions.
+As a minimal reproducable example, the following sprite data would get
+disassembled into a
+.Ql stor v0 .
+.Pp
+.Dl sprite: db 0xF0 0x55
+.Sh EXIT STATUS
+.Ex -std
+.Sh EXAMPLES
+Disassemble a binary:
+.Pp
+.Dl $ c8dump space-invaders.bin
+.Pp
+Disassemble output from the
+.Xr c8asm 1
+assembler:
+.Pp
+.Dl $ c8asm tetris.s | c8dump
+.Sh SEE ALSO
+.Xr ahoy 1 ,
+.Xr c8asm 1 ,
+.Xr c8asm 5
+.Sh AUTHORS
+.An Thomas Voss Aq Mt mail@thomasvoss.com

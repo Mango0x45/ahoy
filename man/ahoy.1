@@ -1,0 +1,148 @@
+.Dd 25 February, 2024
+.Dt AHOY 1
+.Os Ahoy 1.0.0
+.Sh NAME
+.Nm ahoy
+.Nd emulate CHIP-8 games
+.Sh SYNOPSIS
+.Nm
+.Op Fl S
+.Op Fl c Ar "clock speed"
+.Op Fl s Ar seed
+.Op Fl v Ar volume
+.Op Ar file
+.Nm
+.Fl h
+.Sh DESCRIPTION
+.Nm
+is a graphical emulator for the CHIP-8 virtual console.
+When invoked
+.Nm
+attempts to run the ROM specified by
+.Ar file .
+If no such argument is provided or the special filename
+.Sq \-
+is provided,
+the ROM is read from the standard input.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c , Fl Fl clock\-speed Ns = Ns Ar speed
+Specify the clock-speed of the emulator.
+The provided clock-speed must be a non-negative integer and defaults to
+700 Hz.
+.It Fl h , Fl Fl help
+Display help information by opening this manual page.
+.It Fl s , Fl Fl seed Ns = Ns Ar seed
+Specify the seed for the random-number-generator.
+The provided seed must be non-negative integer.
+.It Fl S , Fl Fl scan\-lines
+Start the emulator with scanlines enabled.
+.It Fl v , Fl Fl volume Ns = Ns Ar volume
+Specify the volume level of the emulator.
+The provided volume must be non-negative integer and defaults to 3000 if
+not provided.
+.El
+.Pp
+.Ss Default Keybindings
+As of the current installed release of
+.Nm ,
+there exists no functionality yet to configure keybindings.
+.Pp
+The default keybindings are as follows:
+.Pp
+.Bl -tag -compact -width <space>
+.It 1
+the keypad’s
+.Sq 1
+key
+.It 2
+the keypad’s
+.Sq 2
+key
+.It 3
+the keypad’s
+.Sq 3
+key
+.It 4
+the keypad’s
+.Sq C
+key
+.It q
+the keypad’s
+.Sq 4
+key
+.It w
+the keypad’s
+.Sq 5
+key
+.It e
+the keypad’s
+.Sq 6
+key
+.It r
+the keypad’s
+.Sq D
+key
+.It a
+the keypad’s
+.Sq 7
+key
+.It s
+the keypad’s
+.Sq 8
+key
+.It d
+the keypad’s
+.Sq 9
+key
+.It f
+the keypad’s
+.Sq E
+key
+.It z
+the keypad’s
+.Sq A
+key
+.It x
+the keypad’s
+.Sq 0
+key
+.It c
+the keypad’s
+.Sq B
+key
+.It v
+the keypad’s
+.Sq F
+key
+.It Aq space
+(un)pause the emulator
+.It p
+pause the emulator
+.It =
+increase volume by 500
+.It \-
+decrease volume by 500
+.It .
+increase the clock speed by 10 Hz
+.It ,
+decrease the clock speed by 10 Hz
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh EXAMPLES
+Play a CHIP-8 game:
+.Pp
+.Dl $ ahoy maze.bin
+.Pp
+Test the output of the
+.Xr c8asm 1
+assembler:
+.Pp
+.Dl $ c8asm tag.s | ahoy
+.Sh SEE ALSO
+.Xr c8asm 1 ,
+.Xr c8dump 1
+.Sh AUTHORS
+.An Thomas Voss Aq Mt mail@thomasvoss.com

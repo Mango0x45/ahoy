@@ -1,0 +1,65 @@
+.Dd 26 February, 2024
+.Dt U8ASM 1
+.Os Ahoy 1.0.0
+.Sh NAME
+.Nm c8asm
+.Nd assemble CHIP-8 binaries
+.Sh SYNOPSIS
+.Nm
+.Op Ar
+.Nm
+.Fl h
+.Sh DESCRIPTION
+The
+.Nm
+utility reads
+.Xr c8asm 5
+source code files provided as command-line arguments and writes the
+corresponding binary to the standard output.
+If no command-line arguments are provided or the special
+.Sq \-
+filename is given,
+input is read from the standard input.
+.Pp
+The assembler is extremely barebones, with no notion of a preprocessor.
+If metaprogramming is desired you might consider using a macro-processor
+such as
+.Xr m4 1
+or
+.Xr cpp 1 .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl h , Fl Fl help
+Display help information by opening this manual page.
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh EXAMPLES
+Assemble a binary:
+.Pp
+.Dl $ c8asm celeste.s >celeste.bin
+.Pp
+Preprocess source files using the
+.Xr m4 1
+macro processor and then assemble them:
+.Pp
+.Dl $ m4 setup.s main-loop.s | c8asm >dragster.bin
+.Pp
+In the above example, local labels will end up being global to the entire
+program as a result of
+.Ic m4
+concatenating the files.
+An alternative solution using process substitution
+.Pq if your shell supports it
+is as follows:
+.Pp
+.Dl c8asm <(setup.s) <(main-loop.s) >dragster.bin
+.Sh SEE ALSO
+.Xr ahoy 1 ,
+.Xr c8dump 1 ,
+.Xr cpp 1 ,
+.Xr m4 1 ,
+.Xr c8asm 5
+.Sh AUTHORS
+.An Thomas Voss Aq Mt mail@thomasvoss.com
