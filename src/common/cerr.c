@@ -34,7 +34,7 @@ cerrinit(const char *s)
 	const char *p = strrchr(s, '/');
 	progname = p ? p + 1 : s;
 
-	if (isatty(STDOUT_FILENO)) {
+	if (isatty(STDERR_FILENO)) {
 		const char *ev = getenv("NO_COLOR");
 		color = !ev || !*ev;
 	}
