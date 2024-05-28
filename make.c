@@ -16,10 +16,10 @@
 
 #include "cbs.h"
 
-#define WARN \
-	"-Wall", "-Wextra", "-Wpedantic", "-Werror", \
-		"-Wno-attributes",  /* GNU attributes in headers */ \
-		"-Wno-parentheses", /* if (x = foo()) */ \
+#define WARN                                                                   \
+	"-Wall", "-Wextra", "-Wpedantic", "-Werror",                               \
+		"-Wno-attributes",  /* GNU attributes in headers */                    \
+		"-Wno-parentheses", /* if (x = foo()) */                               \
 		"-Wno-pointer-sign" /* char ↔ char8_t */
 
 #define CC "cc"
@@ -41,13 +41,13 @@
 #define FLAGMSK(f) ((uint64_t)1 << ((f) - ((f) < 'a' ? 'A' : 'G')))
 #define FLAGSET(f) (flags & FLAGMSK(f))
 
-#define _CMDPRC(c, f) \
-	do { \
-		int ec; \
-		f(c); \
-		if ((ec = cmdexec(c)) != EXIT_SUCCESS) \
-			diex("%s terminated with exit-code %d", *c._argv, ec); \
-		cmdclr(&c); \
+#define _CMDPRC(c, f)                                                          \
+	do {                                                                       \
+		int ec;                                                                \
+		f(c);                                                                  \
+		if ((ec = cmdexec(c)) != EXIT_SUCCESS)                                 \
+			diex("%s terminated with exit-code %d", *c._argv, ec);             \
+		cmdclr(&c);                                                            \
 	} while (0)
 #define CMDPRC(c)  _CMDPRC(c, cmdput)
 #define CMDPRC2(c) _CMDPRC(c, cmdput2)
@@ -135,10 +135,10 @@ main(int argc, char **argv)
 
 		for (size_t i = 0; i < lengthof(mans); i++) {
 			char src[128];
-			char *path =
-				mkoutpath(streq(mans[i], "c8asm.5") ? "/share/man/man5"
-			                                        : "/share/man/man1",
-			              mans[i]);
+			char *path = mkoutpath(streq(mans[i], "c8asm.5")
+			                           ? "/share/man/man5"
+			                           : "/share/man/man1",
+			                       mans[i]);
 			c.dst = mans[i];
 			snprintf(src, sizeof(src), "man/%s", mans[i]);
 			cmdadd(&c, "install", "-Dm644", src, path);

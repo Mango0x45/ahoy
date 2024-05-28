@@ -68,10 +68,10 @@ pushlabel(struct labels *dst, struct label lbl)
 void
 assemble(FILE *stream, struct ast ast)
 {
-#define PUT(X) \
-	do { \
-		uint16_t __x = htons(X); \
-		fwrite(&__x, 1, sizeof(__x), stream); \
+#define PUT(X)                                                                 \
+	do {                                                                       \
+		uint16_t __x = htons(X);                                               \
+		fwrite(&__x, 1, sizeof(__x), stream);                                  \
 	} while (false)
 
 	bool pad = false;

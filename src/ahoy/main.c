@@ -21,19 +21,19 @@
 #include "gui.h"
 #include "macros.h"
 
-#define STRTOX(T, SUF) \
-	static T strto##SUF(const char8_t *s, rune *ch) \
-	{ \
-		T n = 0; \
-		size_t len = strlen(s); \
-		while (u8next(ch, &s, &len)) { \
-			if (!(*ch >= '0' && *ch <= '9')) \
-				return -1; \
-			if (ckd_mul(&n, n, 10) || ckd_add(&n, n, *ch - '0')) \
-				return -1; \
-		} \
-		*ch = '\0'; \
-		return n; \
+#define STRTOX(T, SUF)                                                         \
+	static T strto##SUF(const char8_t *s, rune *ch)                            \
+	{                                                                          \
+		T n = 0;                                                               \
+		size_t len = strlen(s);                                                \
+		while (u8next(ch, &s, &len)) {                                         \
+			if (!(*ch >= '0' && *ch <= '9'))                                   \
+				return -1;                                                     \
+			if (ckd_mul(&n, n, 10) || ckd_add(&n, n, *ch - '0'))               \
+				return -1;                                                     \
+		}                                                                      \
+		*ch = '\0';                                                            \
+		return n;                                                              \
 	}
 
 STRTOX(int, i)
@@ -58,23 +58,23 @@ usage(void)
 	exit(EXIT_FAILURE);
 }
 
-#define NUMERIC_ARG(T, M, FMT, F, DST, N) \
-	do { \
-		rune ch; \
-		T n = F(optarg, &ch); \
-		_Pragma("GCC diagnostic push"); \
-		_Pragma("GCC diagnostic ignored \"-Wtype-limits\""); \
-		if (n > M || (ch >= '0' && ch <= '9')) { \
-			_Pragma("GCC diagnostic pop"); \
-			warnx(N " too high; may not exceed %" FMT, M); \
-			usage(); \
-		} else if (ch) { \
-			char8_t buf[U8_LEN_MAX]; \
-			int w = rtou8(buf, ch, sizeof(buf)); \
-			warnx("invalid character ‘%.*s’; " N " must be numeric", w, buf); \
-			usage(); \
-		} \
-		cfg.DST = n; \
+#define NUMERIC_ARG(T, M, FMT, F, DST, N)                                      \
+	do {                                                                       \
+		rune ch;                                                               \
+		T n = F(optarg, &ch);                                                  \
+		_Pragma("GCC diagnostic push");                                        \
+		_Pragma("GCC diagnostic ignored \"-Wtype-limits\"");                   \
+		if (n > M || (ch >= '0' && ch <= '9')) {                               \
+			_Pragma("GCC diagnostic pop");                                     \
+			warnx(N " too high; may not exceed %" FMT, M);                     \
+			usage();                                                           \
+		} else if (ch) {                                                       \
+			char8_t buf[U8_LEN_MAX];                                           \
+			int w = rtou8(buf, ch, sizeof(buf));                               \
+			warnx("invalid character ‘%.*s’; " N " must be numeric", w, buf);  \
+			usage();                                                           \
+		}                                                                      \
+		cfg.DST = n;                                                           \
 	} while (false)
 
 int

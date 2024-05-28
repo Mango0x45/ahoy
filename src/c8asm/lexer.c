@@ -65,7 +65,7 @@ lexfile(void)
 	return toks;
 }
 
-#define DIE_AT_POS_WITH_CODE2(HL, ...) \
+#define DIE_AT_POS_WITH_CODE2(HL, ...)                                         \
 	DIE_AT_POS_WITH_CODE((HL), sv->p - w, __VA_ARGS__)
 
 void

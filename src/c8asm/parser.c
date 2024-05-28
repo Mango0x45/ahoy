@@ -218,33 +218,33 @@ reqnext(const char *want, tokkind msk)
 #define I(...) ((struct dir){.kind = D_INSTR, .instr = (__VA_ARGS__)})
 
 /* Common implementations of instructions that always take 1 or 2 v-registers */
-#define ONE_VREG(T) \
-	do { \
-		struct instr ins = {.kind = (T)}; \
-		struct token tok = reqnext("v-register", T_IDENT); \
-		if (regtype(tok.sv) & ~RT_VX) { \
-			DIE_AT_POS_WITH_CODE(tok.sv, tok.sv.p, E_EXPECTED, "v-register", \
-			                     tokrepr(tok.kind)); \
-		} \
-		ins.args[ins.len++].val = hexval(tok.sv.p[1]); \
-		dapush(&ast, I(ins)); \
+#define ONE_VREG(T)                                                            \
+	do {                                                                       \
+		struct instr ins = {.kind = (T)};                                      \
+		struct token tok = reqnext("v-register", T_IDENT);                     \
+		if (regtype(tok.sv) & ~RT_VX) {                                        \
+			DIE_AT_POS_WITH_CODE(tok.sv, tok.sv.p, E_EXPECTED, "v-register",   \
+			                     tokrepr(tok.kind));                           \
+		}                                                                      \
+		ins.args[ins.len++].val = hexval(tok.sv.p[1]);                         \
+		dapush(&ast, I(ins));                                                  \
 	} while (false)
-#define TWO_VREG(T) \
-	do { \
-		struct instr ins = {.kind = (T)}; \
-		struct token lhs = reqnext("v-register", T_IDENT); \
-		struct token rhs = reqnext("v-register", T_IDENT); \
-		if (regtype(lhs.sv) & ~RT_VX) { \
-			DIE_AT_POS_WITH_CODE(lhs.sv, lhs.sv.p, E_EXPECTED, "v-register", \
-			                     tokrepr(lhs.kind)); \
-		} \
-		if (regtype(rhs.sv) & ~RT_VX) { \
-			DIE_AT_POS_WITH_CODE(rhs.sv, rhs.sv.p, E_EXPECTED, "v-register", \
-			                     tokrepr(rhs.kind)); \
-		} \
-		ins.args[ins.len++].val = hexval(lhs.sv.p[1]); \
-		ins.args[ins.len++].val = hexval(rhs.sv.p[1]); \
-		dapush(&ast, I(ins)); \
+#define TWO_VREG(T)                                                            \
+	do {                                                                       \
+		struct instr ins = {.kind = (T)};                                      \
+		struct token lhs = reqnext("v-register", T_IDENT);                     \
+		struct token rhs = reqnext("v-register", T_IDENT);                     \
+		if (regtype(lhs.sv) & ~RT_VX) {                                        \
+			DIE_AT_POS_WITH_CODE(lhs.sv, lhs.sv.p, E_EXPECTED, "v-register",   \
+			                     tokrepr(lhs.kind));                           \
+		}                                                                      \
+		if (regtype(rhs.sv) & ~RT_VX) {                                        \
+			DIE_AT_POS_WITH_CODE(rhs.sv, rhs.sv.p, E_EXPECTED, "v-register",   \
+			                     tokrepr(rhs.kind));                           \
+		}                                                                      \
+		ins.args[ins.len++].val = hexval(lhs.sv.p[1]);                         \
+		ins.args[ins.len++].val = hexval(rhs.sv.p[1]);                         \
+		dapush(&ast, I(ins));                                                  \
 	} while (false)
 
 void

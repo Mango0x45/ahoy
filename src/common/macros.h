@@ -11,8 +11,8 @@
 
 #if DEBUG
 #	include "cerr.h"
-#	define assume(C) \
-		((C) ? (void)0 \
+#	define assume(C)                                                          \
+		((C) ? (void)0                                                         \
 		     : diex("%s:%d: %s(): assumption ‘%s’ failed", __FILE__, __LINE__, \
 		            __func__, #C))
 #else
