@@ -20,7 +20,7 @@ typedef enum {
 	I_DRW,
 	I_HEX,
 	I_JP_A,
-	I_JP_V0_ADDR,
+	I_JP_V0_A,
 	I_LD_DT,
 	I_LD_I,
 	I_LD_ST,
