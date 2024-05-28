@@ -5,6 +5,7 @@
 #include <getopt.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <stdckdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,19 +20,6 @@
 #include "emulator.h"
 #include "gui.h"
 #include "macros.h"
-
-/* TODO: Remove this once stdckdint.h is in GCC / Glibc */
-#if __has_include(<stdckdint.h>)
-#	include <stdckdint.h>
-#	warning "stdckdint.h now available; remove manual ckd_*() implementations"
-#elifdef __GNUC__
-#	define ckd_add(r, a, b) ((bool)__builtin_add_overflow(a, b, r))
-#	define ckd_mul(r, a, b) ((bool)__builtin_mul_overflow(a, b, r))
-#else
-#	define ckd_add(r, a, b)
-#	define ckd_mul(r, a, b)
-#	warning "ckd_*() not supported on the current platform"
-#endif
 
 #define STRTOX(T, SUF) \
 	static T strto##SUF(const char8_t *s, rune *ch) \
